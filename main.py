@@ -2,8 +2,7 @@
 # Imports
 import os
 import logging
-import telegram
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
+from telegram.ext import Updater, CommandHandler
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import redis
@@ -20,17 +19,16 @@ STUDENT_MAP = "STUDENT_MAP"  # Stores mapping of student's telegram @username to
 TUTOR_MAP = "TUTOR_MAP"  # Stores @usernames of tutor and state of whether they're running a session
 TOKEN_MAP = "TOKEN_MAP"  # Stores the set of active tokens and their capacity at a particular instant in time
 
-redis_client.hset(TUTOR_MAP, "@mhenz", "No")  # Either no or Token
+redis_client.hset(TUTOR_MAP, "@mhenz", "No")  # Either no or Token (TODO) change no to none.
 redis_client.hset(TUTOR_MAP, "@chaitanyabaranwal", "No")
 redis_client.hset(TUTOR_MAP, "raivat", "No")
-
 
 # Google Spreadsheet
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 credentials = ServiceAccountCredentials.from_json_keyfile_name('CS1101S Bot-99365efd2073.json', scope)
 gc = gspread.authorize(credentials)
 wks = gc.open("CS1101S Demo").sheet1
-col_name = 'D'  # (TODO) adjust by week time
+col_name = get_week()  # (TODO) resolve reference. Ask Chai.
 
 
 ##### Tutor #######
@@ -74,14 +72,63 @@ def stop_session(update, context):
         return
     # stop the session
     token = redis_client.hget(TUTOR_MAP, username)
-    redis_client.hset(TOKEN_MAP, token, 0)  # Set capacity to 0 directly.
+    redis_client.hset(TOKEN_MAP, token, 0)  # Set capacity to 0 directly. # (TODO) delete the token.
     redis_client.hset(TUTOR_MAP, username, "No")  # Tutor is not active anymore
     context.bot.send_message(chat_id=update.message.chat_id,
                              text="Session has successfully stopped. Thanks!")
 
+
 def generate_hash():
     token = hash(time.time()) % 100000000
     return token
+
+
+def get_week():
+    # return a single capital character that is the column name
+    curr_time = time.getasctime()
+    li = list(curr_time)
+    month = li[1]
+    date = int(li[2])  # convert to integer for comparison later
+    if month == "Aug":
+        if date >= 12 and date <= 18:
+            return 'B'  # W1
+        elif date >= 19 and date < 25:
+            return 'C'  # W2
+        elif date >= 26:
+            return 'D'  # W3
+    if month == "Sept":  # (TODO) confirm if Sept or Sep shortform.
+        if date <= 1:
+            return 'D'  # continue from last month so W3
+        elif date >= 2 and date <= 8:
+            return 'E'  # W4
+        elif date >= 9 and date <= 15:
+            return 'F'  # W5
+        elif date >= 16 and date <= 20:
+            return 'G'  # W6
+        elif date >= 21 and date <= 29:
+            return 'R'  # Recess Week so 'R' - special week.
+        elif date >= 30:
+            return 'H'  # W7
+    if month == "Oct":
+        if date <= 6:
+            return 'H'  # W7 continue from last month
+        if date >= 7 and date <= 13:
+            return 'I'  # W8
+        if date >= 14 and date <= 20:
+            return 'J'  # W 9
+        if date >= 21 and date <= 27:
+            return 'K'  # W 10
+        if date >= 28:
+            return 'L'  # W11
+    if month == "Nov":
+        if date <= 3:
+            return 'L'  # W11
+        if date >= 4 and date <= 10:
+            return 'M'  # W12
+        if date >= 11 and date <= 17:
+            return 'N'  # W 13
+    else:
+        return 'Z'  # any other scenario
 
 
 ##### Student ##########
@@ -158,6 +205,27 @@ def attend(update, context):
                                                                           "successfully marked. Thanks!")
             redis_client.hset(TOKEN_MAP, token, curr_capacity - 1)  # reduce capacity
             return
+
+
+def change_username(update, context):
+    # just extract username and update in reddis client. Ask chai: can we do is?
+    if len(context.args) == 0:
+        context.bot.send_message(chat_id=update.message.chat_id, text='Please enter your matric number along with the '
+                                                                      'command. Eg if your matric number is '
+                                                                      '123456789, enter /change_username 123456789')
+    username = update.message.from_user.username
+    if not redis_client.hexists(STUDENT_MAP, username):
+        context.bot.send_message(chat_id=update.message.chat_id, text="You've not registered yet. Please send /setup "
+                                                                      "<Matric Number> to register")
+        return
+    matric_no = context.args[0]
+    cell = wks.find(matric_no)
+    row_num = cell.row
+    redis_client.hset(STUDENT_MAP, username, row_num)
+    context.bot.send_message(chat_id=update.message.chat_id, text="You're successfully registered! Please wait "
+                                                                  "for your tutor to give you an attendance token")
+    return
+
 
 def main():
     """Start the bot"""
