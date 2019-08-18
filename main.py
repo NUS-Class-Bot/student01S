@@ -8,6 +8,25 @@ from oauth2client.service_account import ServiceAccountCredentials
 import redis
 import time
 
+#######################################
+### SETUP REQUIRED GLOBAL VARIABLES ###
+#######################################
+
+# Function to determine column based on date
+def get_week():
+    cur_time = time.asctime()
+    li = cur_time.split()
+    month = li[1]
+    date = int(li[2])  # convert to integer for comparison later
+    with open('acad_calendar.json') as acad_calendar:
+        data = json.load(acad_calendar)
+        for date_range in data[month].keys():
+            start = int(date_range.split('-')[0])
+            end = int(date_range.split('-')[1])
+            if start <= date <= end:
+                return data[month][date_range]
+    return 'Z'
+
 # Enable logging
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,17 +38,14 @@ STUDENT_MAP = "STUDENT_MAP"  # Stores mapping of student's telegram @username to
 TUTOR_MAP = "TUTOR_MAP"  # Stores @usernames of tutor and state of whether they're running a session
 TOKEN_MAP = "TOKEN_MAP"  # Stores the set of active tokens and their capacity at a particular instant in time
 
-redis_client.hset(TUTOR_MAP, "@mhenz", "No")  # Either no or Token (TODO) change no to none.
-redis_client.hset(TUTOR_MAP, "@chaitanyabaranwal", "No")
-redis_client.hset(TUTOR_MAP, "raivat", "No")
-
 # Google Spreadsheet
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 credentials = ServiceAccountCredentials.from_json_keyfile_name('CS1101S Bot-99365efd2073.json', scope)
 gc = gspread.authorize(credentials)
-wks = gc.open("CS1101S Demo").sheet1
-col_name = get_week()  # (TODO) resolve reference. Ask Chai.
-
+wks1 = gc.open("CS1101S Reflection Attendance").sheet1
+wk2 = gc.open("CS1101S Studio Attendance ").sheet1
+col_name_attend = get_week()  # (TODO) resolve reference. Ask Chai.
+col_name_comment = col_name_attend
 
 ##### Tutor #######
 def start_session(update, context):
