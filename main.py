@@ -14,13 +14,29 @@ import time
 ### SETUP REQUIRED GLOBAL VARIABLES ###
 #######################################
 
-# Function to determine column based on date
-def get_week():
+# Function to determine column based on date for Reflection Spreadsheet
+def get_week_ref():
     cur_time = time.asctime()
     li = cur_time.split()
     month = li[1]
     date = int(li[2])  # convert to integer for comparison later
     with open('acad_calendar.json') as acad_calendar:
+        data = json.load(acad_calendar)
+        for date_range in data[month].keys():
+            start = int(date_range.split('-')[0])
+            end = int(date_range.split('-')[1])
+            if start <= date <= end:
+                return data[month][date_range]
+    return 'Z'
+
+
+# Function to determine column based on date for Reflection Spreadsheet
+def get_week_stu():
+    cur_time = time.asctime()
+    li = cur_time.split()
+    month = li[1]
+    date = int(li[2])  # convert to integer for comparison later
+    with open('acad_calendar_studio.json') as acad_calendar:
         data = json.load(acad_calendar)
         for date_range in data[month].keys():
             start = int(date_range.split('-')[0])
@@ -48,9 +64,9 @@ credentials = ServiceAccountCredentials.from_json_keyfile_name('CS1101S Bot-9936
 gc = gspread.authorize(credentials)
 wks1 = gc.open("CS1101S Reflection Attendance").sheet1  # For Reflection
 wks2 = gc.open("CS1101S Studio Attendance ").sheet1  # For studio
-col_name_attend = get_week()  # (TODO) change values of col names
-col_name_comment = col_name_attend  # (TODO) set based on char + 1.
-col_name_reflect = get_week()  # (TODO) make sure this is the same
+col_name_attend = get_week_stu()
+col_name_comment = chr(ord(col_name_attend) + 1)
+col_name_reflect = get_week_ref()
 
 """
 Function to get username or user ID depending on what is available.
@@ -217,9 +233,10 @@ def attend(update, context):
     token = context.args[0]
     arr = redis_client.hget(TOKEN_MAP, token)
     type = arr[1]
-    if type == "r": #reflection session
+    if type == "r":  # reflection session
         # check if already attended for current week
-        row_name = redis_client.hget(STUDENT_MAP, username) # (TODO) make sure the row number are same for each student in both the different sheets
+        row_name = redis_client.hget(STUDENT_MAP,
+                                     username)  # (TODO) make sure the row number are same for each student in both the different sheets
         val = wks1.acell(f'{col_name_reflect}{row_name}').value
         if val == 1:
             context.bot.send_message(chat_id=update.message.chat_id,
@@ -228,7 +245,7 @@ def attend(update, context):
         else:
             # Token Logic
             token = context.args[0]
-            if not redis_client.hexists(TOKEN_MAP, token): # Not active token
+            if not redis_client.hexists(TOKEN_MAP, token):  # Not active token
                 context.bot.send_message(chat_id=update.message.chat_id,
                                          text="Token doesn't exist or has expired. Please contact your tutor.")
                 return
@@ -246,7 +263,7 @@ def attend(update, context):
                 redis_client.hset(TOKEN_MAP, token, [curr_capacity - 1, "r"])  # reduce capacity
                 return
 
-    else: # studio session
+    else:  # studio session
         # check if already attended for current week
         row_name = redis_client.hget(STUDENT_MAP,
                                      username)  # (TODO) make sure the row number are same for each student in both
@@ -257,7 +274,7 @@ def attend(update, context):
                                      text="Your attendance for this week has already been"
                                           "marked. Thanks!")
         else:
-            if not redis_client.hexists(TOKEN_MAP, token): # Not active token
+            if not redis_client.hexists(TOKEN_MAP, token):  # Not active token
                 context.bot.send_message(chat_id=update.message.chat_id,
                                          text="Token doesn't exist or has expired. Please contact your tutor.")
             curr_capacity = int(redis_client.hget(TOKEN_MAP, token[0]))
@@ -273,7 +290,6 @@ def attend(update, context):
                                                                               "successfully marked. Thanks!")
                 redis_client.hset(TOKEN_MAP, token, [curr_capacity - 1, "r"])  # reduce capacity
                 return
-
 
 
 """
@@ -295,7 +311,6 @@ def help_func(update, context):
 """
 Function to change the username of bot user.
 """
-
 
 # def change_username(update, context):  # (TODO) Review code for avenger vs student vs tutor reflection
 #     # just extract username and update in reddis client. Ask chai: can we do is?
@@ -319,7 +334,6 @@ Function to change the username of bot user.
 Function to generate help text.
 """
 
-
 def main():
     """Start the bot"""
     # Create an event handler, # (TODO) hide key
@@ -334,6 +348,7 @@ def main():
             redis_client.hset(TUTOR_MAP, admin_member, "No")
         for avenger in data['avenger']:
             redis_client.hset(AVENGER_MAP, avenger, "No")
+        redis_client.hset(AVENGER_MAP, "raivatshah")  # for testing.
 
     # Get dispatcher to register handlers
     dp = updater.dispatcher
