@@ -30,7 +30,7 @@ def get_week_ref():
     return 'Z'
 
 
-# Function to determine column based on date for Reflection Spreadsheet
+# Function to determine column based on date for Studio Spreadsheet
 def get_week_stu():
     cur_time = time.asctime()
     li = cur_time.split()
@@ -55,8 +55,9 @@ redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_respo
 redis_pickle_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=False)
 STUDENT_MAP = "STUDENT_MAP"  # Maps student's telegram @username to row num in spreadsheet
 TUTOR_MAP = "TUTOR_MAP"  # Maps @username of staff to state ("no"/token)
-TOKEN_MAP = "TOKEN_MAP"  # Maps the set of active tokens to an array [capacity, "type"] where type is "r" or "s"
+TOKEN_MAP = "TOKEN_MAP"  # Maps the set of active tokens to an array capacity
 AVENGER_MAP = "AVENGER_MAP"  # Maps @username of avenger to state ("no"/token)
+TOKEN_TYPE_MAP = "TOKEN_TYPE"  # Maps the set of active tokens to type, which is either "r" or "s"
 
 # Google Spreadsheet
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
@@ -75,7 +76,7 @@ Function to get username or user ID depending on what is available.
 
 def get_user_id_or_username(update):
     user_id = update.message.from_user.id
-    username = get_user_id_or_username(update)
+    username = update.message.from_user.username
     if username:
         return username
     else:
@@ -105,23 +106,32 @@ def start_session(update, context):
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Number of students must be greater than 0.")
         return
-    if redis_client.hget(TUTOR_MAP, username) != "No":
+    token = generate_hash()
+    if redis_client.hexists(TUTOR_MAP, username):
+        if redis_client.hget(TUTOR_MAP, username) != "No":
+            context.bot.send_message(chat_id=update.message.chat_id,
+                                     text="A session is already running. Please use /stop_session to stop it")
+            return
+
+        redis_client.hset(TUTOR_MAP, username, token)  # Make tutor active. Store string value of token as value
+        redis_client.hset(TOKEN_MAP, token, int(context.args[0]))  # Activate Token and store capacity
+        redis_client.hset(TOKEN_TYPE_MAP, token, "r")  # Reflection type
+        context.bot.send_message(chat_id=update.message.chat_id, text=f'You have successfully started a Reflection '
+                                                                      f'Session. '
+                                                                      f'Your token is {token}. Please write it on a '
+                                                                      f'board to share it with students')
+    else:  # avenger
+        if redis_client.hget(AVENGER_MAP, username) != "No":
+            context.bot.send_message(chat_id=update.message.chat_id,
+                                     text="A session is already running. Please use /stop_session to stop it")
+            return
+
+        redis_client.hset(AVENGER_MAP, username, token)
+        redis_client.hset(TOKEN_MAP, token, int(context.args[0]))
+        redis_client.hset(TOKEN_TYPE_MAP, token, "r")  # Studio type
         context.bot.send_message(chat_id=update.message.chat_id,
-                                 text="A session is already running. Please use /stop_session to stop it")
-    else:
-        token = generate_hash()
-        if redis_client.hexists(TUTOR_MAP, username):
-            redis_client.hset(TUTOR_MAP, username, token)  # Make tutor active. Store string value of token as value
-            redis_client.hset(TOKEN_MAP, token, [int(context.args[0]), "s"])  # Activate Token and store capacity & type
-            context.bot.send_message(chat_id=update.message.chat_id,
-                                     text=f'You have successfully started a Reflection Session. '
-                                          f'Your token is {token}. Please write it on a board to share it with students')
-        else:
-            redis_client.hset(AVENGER_MAP, username, token)
-            redis_client.hset(TOKEN_MAP, token, [int(context.args[0]), "r"])
-            context.bot.send_message(chat_id=update.message.chat_id,
-                                     text=f'You have successfully started a Studio Session. '
-                                          f'Your token is {token}. Please write it on a board to share it with students')
+                                 text=f'You have successfully started a Studio Session. '
+                                      f'Your token is {token}. Please write it on a board to share it with students')
 
 
 """
@@ -131,11 +141,11 @@ Function to stop an attendance session.
 
 def stop_session(update, context):
     username = get_user_id_or_username(update)
-    if not redis_client.hexists(TUTOR_MAP, username):
+    if not (redis_client.hexists(TUTOR_MAP, username) or redis_client.hexists(AVENGER_MAP, username)):
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Sorry! You're not registered as a staff member and hence cannot use this command")
         return
-    if not (redis_client.hget(TUTOR_MAP, username) == "Yes"):
+    if redis_client.hget(TUTOR_MAP, username) == "No" or redis_client.hget(AVENGER_MAP, username) == "No":
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="You've not started a session yet. Please send /start_session to start a session")
         return
@@ -149,6 +159,7 @@ def stop_session(update, context):
     else:
         token = redis_client.hget(AVENGER_MAP, username)
         redis_client.hdel(TOKEN_MAP, token)
+        redis_client.hdel(TOKEN_TYPE_MAP, token)
         redis_client.hset(AVENGER_MAP, username, "No")
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Your Studio Session has successfully stopped. Thanks!")
@@ -231,13 +242,12 @@ def attend(update, context):
         return
     # decide reflection or studio
     token = context.args[0]
-    arr = redis_client.hget(TOKEN_MAP, token)
-    type = arr[1]
+    type = redis_client.hget(TOKEN_TYPE_MAP, token)
     if type == "r":  # reflection session
         # check if already attended for current week
         row_name = redis_client.hget(STUDENT_MAP,
                                      username)  # (TODO) make sure the row number are same for each student in both the different sheets
-        val = wks1.acell(f'{col_name_reflect}{row_name}').value
+        val = wks1.acell(f'{col_name_reflect}{row_name}').value  # check reflection sheet
         if val == 1:
             context.bot.send_message(chat_id=update.message.chat_id,
                                      text="Your attendance for this week has already been"
@@ -249,7 +259,7 @@ def attend(update, context):
                 context.bot.send_message(chat_id=update.message.chat_id,
                                          text="Token doesn't exist or has expired. Please contact your tutor.")
                 return
-            curr_capacity = int(redis_client.hget(TOKEN_MAP, token[0]))
+            curr_capacity = int(redis_client.hget(TOKEN_MAP, token))
             if curr_capacity == 0:
                 context.bot.send_message(chat_id=update.message.chat_id,
                                          text="Cannot take attendance. Your class is full. Please contact tutor as "
@@ -260,7 +270,7 @@ def attend(update, context):
                 wks1.update_acell(f'{col_name_reflect}{row_name}', '1')
                 context.bot.send_message(chat_id=update.message.chat_id, text="Your attendance for this week has been "
                                                                               "successfully marked. Thanks!")
-                redis_client.hset(TOKEN_MAP, token, [curr_capacity - 1, "r"])  # reduce capacity
+                redis_client.hset(TOKEN_MAP, token, curr_capacity - 1)  # reduce capacity
                 return
 
     else:  # studio session
@@ -288,7 +298,7 @@ def attend(update, context):
                 wks2.update_acell(f'{col_name_attend}{row_name}', '1')
                 context.bot.send_message(chat_id=update.message.chat_id, text="Your attendance for this week has been "
                                                                               "successfully marked. Thanks!")
-                redis_client.hset(TOKEN_MAP, token, [curr_capacity - 1, "r"])  # reduce capacity
+                redis_client.hset(TOKEN_MAP, token, curr_capacity - 1)  # reduce capacity
                 return
 
 
@@ -334,6 +344,7 @@ Function to change the username of bot user.
 Function to generate help text.
 """
 
+
 def main():
     """Start the bot"""
     # Create an event handler, # (TODO) hide key
@@ -348,7 +359,7 @@ def main():
             redis_client.hset(TUTOR_MAP, admin_member, "No")
         for avenger in data['avenger']:
             redis_client.hset(AVENGER_MAP, avenger, "No")
-        redis_client.hset(AVENGER_MAP, "raivatshah")  # for testing.
+        redis_client.hset(AVENGER_MAP, "raivatshah", "No")  # for testing.
 
     # Get dispatcher to register handlers
     dp = updater.dispatcher
@@ -360,7 +371,7 @@ def main():
     dp.add_handler(CommandHandler('start_session', start_session))
     dp.add_handler(CommandHandler('stop_session', stop_session))
     # dp.add_handler(CommandHandler('change_username', change_username))
-    dp.add_handler(CommandHandler('help'), help_func)
+    dp.add_handler(CommandHandler('help', help_func))
 
     # Start the bot
     updater.start_polling()
