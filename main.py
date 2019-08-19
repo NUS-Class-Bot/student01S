@@ -242,8 +242,8 @@ def attend(update, context):
         return
     # decide reflection or studio
     token = context.args[0]
-    type = redis_client.hget(TOKEN_TYPE_MAP, token)
-    if type == "r":  # reflection session
+    tipe = redis_client.hget(TOKEN_TYPE_MAP, token)
+    if tipe == "r":  # reflection session
         # check if already attended for current week
         row_name = redis_client.hget(STUDENT_MAP,
                                      username)  # (TODO) make sure the row number are same for each student in both the different sheets
