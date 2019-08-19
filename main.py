@@ -128,7 +128,7 @@ def start_session(update, context):
 
         redis_client.hset(AVENGER_MAP, username, token)
         redis_client.hset(TOKEN_MAP, token, int(context.args[0]))
-        redis_client.hset(TOKEN_TYPE_MAP, token, "r")  # Studio type
+        redis_client.hset(TOKEN_TYPE_MAP, token, "s")  # Studio type
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text=f'You have successfully started a Studio Session. '
                                       f'Your token is {token}. Please write it on a board to share it with students')
