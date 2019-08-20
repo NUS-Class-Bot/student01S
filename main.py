@@ -211,6 +211,10 @@ def setup(update, context):
     # check if student can register for this module!
     student_no = context.args[0]
     try:
+        global gc
+        global credentials
+        if credentials.access_token_expired:
+            gc.login()
         cell = wks1.find(student_no)  # Look in reflection sessions
         row_num = cell.row
         redis_client.hset(STUDENT_MAP, username, row_num)
@@ -243,6 +247,10 @@ def attend(update, context):
     # decide reflection or studio
     token = context.args[0]
     tipe = redis_client.hget(TOKEN_TYPE_MAP, token)
+    global gc
+    global credentials
+    if credentials.access_token_expired:
+        gc.login()
     if tipe == "r":  # reflection session
         # check if already attended for current week
         row_name = redis_client.hget(STUDENT_MAP,
