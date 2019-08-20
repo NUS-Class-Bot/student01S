@@ -75,6 +75,8 @@ Function to get username or user ID depending on what is available.
 
 
 def get_user_id_or_username(update):
+    global gc
+    gc = gspread.authorize(credentials)
     user_id = update.message.from_user.id
     username = update.message.from_user.username
     if username:
@@ -92,6 +94,8 @@ Function to start an attendance session.
 
 def start_session(update, context):
     # Store tutor usernames
+    global gc
+    gc = gspread.authorize(credentials)
     username = get_user_id_or_username(update)
     if not (redis_client.hexists(TUTOR_MAP, username) or redis_client.hexists(AVENGER_MAP, username)):
         context.bot.send_message(chat_id=update.message.chat_id,
@@ -140,6 +144,8 @@ Function to stop an attendance session.
 
 
 def stop_session(update, context):
+    global gc
+    gc = gspread.authorize(credentials)
     username = get_user_id_or_username(update)
     if not (redis_client.hexists(TUTOR_MAP, username) or redis_client.hexists(AVENGER_MAP, username)):
         context.bot.send_message(chat_id=update.message.chat_id,
@@ -195,6 +201,8 @@ store it in the key-value database.
 
 
 def setup(update, context):
+    global gc
+    gc = gspread.authorize(credentials)
     # check if no args
     if len(context.args) == 0:
         context.bot.send_message(chat_id=update.message.chat_id, text='Please enter your student number along with the '
@@ -229,6 +237,8 @@ Function to mark attendance of bot user.
 
 
 def attend(update, context):
+    global gc
+    gc = gspread.authorize(credentials)
     # check if no args
     if len(context.args) == 0:
         context.bot.send_message(chat_id=update.message.chat_id, text='Insufficient number of arguments. Please enter '
