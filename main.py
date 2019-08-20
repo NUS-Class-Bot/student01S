@@ -295,6 +295,7 @@ def attend(update, context):
             if not redis_client.hexists(TOKEN_MAP, token):  # Not active token
                 context.bot.send_message(chat_id=update.message.chat_id,
                                          text="Token doesn't exist or has expired. Please contact your tutor.")
+                return
             curr_capacity = int(redis_client.hget(TOKEN_MAP, token))
             if curr_capacity == 0:
                 context.bot.send_message(chat_id=update.message.chat_id,
