@@ -75,6 +75,8 @@ Function to get username or user ID depending on what is available.
 
 
 def get_user_id_or_username(update):
+    global credentials
+    credentials = ServiceAccountCredentials.from_json_keyfile_name('CS1101S Bot-99365efd2073.json', scope)
     global gc
     gc = gspread.authorize(credentials)
     user_id = update.message.from_user.id
@@ -94,6 +96,8 @@ Function to start an attendance session.
 
 def start_session(update, context):
     # Store tutor usernames
+    global credentials
+    credentials = ServiceAccountCredentials.from_json_keyfile_name('CS1101S Bot-99365efd2073.json', scope)
     global gc
     gc = gspread.authorize(credentials)
     username = get_user_id_or_username(update)
@@ -144,6 +148,8 @@ Function to stop an attendance session.
 
 
 def stop_session(update, context):
+    global credentials
+    credentials = ServiceAccountCredentials.from_json_keyfile_name('CS1101S Bot-99365efd2073.json', scope)
     global gc
     gc = gspread.authorize(credentials)
     username = get_user_id_or_username(update)
@@ -201,6 +207,8 @@ store it in the key-value database.
 
 
 def setup(update, context):
+    global credentials
+    credentials = ServiceAccountCredentials.from_json_keyfile_name('CS1101S Bot-99365efd2073.json', scope)
     global gc
     gc = gspread.authorize(credentials)
     # check if no args
@@ -237,6 +245,8 @@ Function to mark attendance of bot user.
 
 
 def attend(update, context):
+    global credentials
+    credentials = ServiceAccountCredentials.from_json_keyfile_name('CS1101S Bot-99365efd2073.json', scope)
     global gc
     gc = gspread.authorize(credentials)
     # check if no args
