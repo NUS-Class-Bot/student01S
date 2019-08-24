@@ -389,6 +389,7 @@ def attendance_reflection(update, context):
             if wks1.acell(f'{col}{row_num}').value == u"\u2713":
                 weeks.append("Week " + str(week_counter))
                 week_counter += 1
+        print(weeks)
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Our records indicate that you've so far attended reflection sessions for: " + print_arr(
                                      weeks))
@@ -403,6 +404,7 @@ def print_arr(arr):
     runner = ""
     for item in arr:
         runner += item + " "
+    print(runner)
     return runner
 
 
