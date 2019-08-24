@@ -350,8 +350,60 @@ Function to change the username of bot user.
 #
 
 """
-Function to generate help text.
+Function to give feedback to the developers.
 """
+# def feedback(update, context):
+
+
+"""
+Function to know attendance so far for studio sessions
+"""
+
+# def my_attendance_studio(update, context):
+#     # if not registered
+#     username = get_user_id_or_username(update)
+#     if not redis_client.hexists(STUDENT_MAP, username):
+#         context.bot.send_message(chat_id=update.message.chat_id, text="You've not registered yet. Please send /setup "
+#                                                                       "<student Number> to register")
+#     else:
+#         row_num = redis_client.hget(STUDENT_MAP, username)
+
+
+"""
+Function to know attendance so far for reflection sessions
+"""
+
+
+def attendance_reflection(update, context):
+    # if not registered
+    username = get_user_id_or_username(update)
+    if not redis_client.hexists(STUDENT_MAP, username):
+        context.bot.send_message(chat_id=update.message.chat_id, text="You've not registered yet. Please send /setup "
+                                                                      "<student Number> to register")
+    else:
+        row_num = redis_client.hget(STUDENT_MAP, username)
+        weeks = []
+        week_counter = 2
+        for i in range(66, 78):
+            col = chr(i)
+            if wks1.acell(f'{col}{row_num}').value == 1:
+                weeks.append("Week " + str(week_counter))
+                week_counter += 1
+        context.bot.send_message(chat_id=update.message.chat_id,
+                                 text="Our records indicate that you've so far attended reflection sessions for: " + print_arr(
+                                     weeks))
+
+
+"""
+Function to get the string version of an array in one line. 
+"""
+
+
+def print_arr(arr):
+    runner = ""
+    for item in arr:
+        runner += item + " "
+    return runner
 
 
 def main():
@@ -381,6 +433,7 @@ def main():
     dp.add_handler(CommandHandler('stop_session', stop_session))
     # dp.add_handler(CommandHandler('change_username', change_username))
     dp.add_handler(CommandHandler('help', help_func))
+    dp.add_handler(CommandHandler('attendance_reflection', attendance_reflection))
 
     # Start the bot
     updater.start_polling()
