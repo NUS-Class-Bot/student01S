@@ -386,7 +386,7 @@ def attendance_reflection(update, context):
         week_counter = 2
         for i in range(66, 78):
             col = chr(i)
-            if wks1.acell(f'{col}{row_num}').value == u"\u2713":
+            if wks1.acell(f'{col}{row_num}').value == 1:
                 weeks.append("Week " + str(week_counter))
                 week_counter += 1
         print(weeks)
