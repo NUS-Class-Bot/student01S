@@ -362,7 +362,6 @@ def change_username(update, context):  # (TODO) Review code for avenger vs stude
                                           "for this module. Please contact a staff "
                                           "member.")
 
-
 """
 Function to give feedback to the developers.
 """
@@ -395,6 +394,10 @@ def attendance_reflection(update, context):
         context.bot.send_message(chat_id=update.message.chat_id, text="You've not registered yet. Please send /setup "
                                                                       "<Student Number> to register")
     else:  # iterate through columns of the row, checking for instances where the attendance is marked.
+        global gc
+        global credentials
+        if credentials.access_token_expired:
+            gc.login()
         row_num = redis_client.hget(STUDENT_MAP, username)
         weeks = []
         week_counter = 2
@@ -408,7 +411,6 @@ def attendance_reflection(update, context):
                                  text="Our records indicate that you've so far attended reflection sessions for: "
                                       + print_arr(weeks) + ". Please contact a staff member if there is a discrepancy")
 
-
 """
 Function to know attendance so far for studio sessions
 """
@@ -421,6 +423,10 @@ def attendance_studio(update, context):
         context.bot.send_message(chat_id=update.message.chat_id, text="You've not registered yet. Please send /setup "
                                                                       "<Student Number> to register")
     else:  # iterate through columns of the row, checking for instances where the attendance is marked.
+        global gc
+        global credentials
+        if credentials.access_token_expired:
+            gc.login()
         row_num = redis_client.hget(STUDENT_MAP, username)
         weeks = []
         week_counter = 2
