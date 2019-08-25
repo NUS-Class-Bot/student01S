@@ -387,7 +387,7 @@ def feedback(update, context):
         row = redis_client.hget(TOKEN_MAP, "feedback")
         wk3.update_acell("A" + row, name)
         wk3.update_acell("B" + row, username)
-        wk3.update_acell("C" + row, context.args)
+        wk3.update_acell("C" + row, print_arr(context.args))
         redis_client.hset(TOKEN_MAP, "feedback", row + 1) # update row num for other feedback
         context.bot.send_message(chat_id=update.message.chat_id, text="Thank you so much for your valuable feedback!")
 
