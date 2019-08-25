@@ -322,6 +322,8 @@ def help_func(update, context):
                                   "For students: \n"
                                   "/setup <student number>: to register yourself.\n"
                                   "/attend <token> to mark your attendance. Token will be provided by cluster leader.\n"
+                                  "/attendance_reflection to check your attendance for reflection sessions\n"
+                                  "/attendance_studio to check your attendance for studio sessions\n"
                                   "For avengers/tutors: \n"
                                   "/start_session <number of students> to mark the attendance for your group of "
                                   "avengers.\n"
@@ -360,6 +362,7 @@ def change_username(update, context):  # (TODO) Review code for avenger vs stude
                                           "for this module. Please contact a staff "
                                           "member.")
 
+
 """
 Function to give feedback to the developers.
 """
@@ -391,7 +394,7 @@ def attendance_reflection(update, context):
     if not redis_client.hexists(STUDENT_MAP, username):
         context.bot.send_message(chat_id=update.message.chat_id, text="You've not registered yet. Please send /setup "
                                                                       "<Student Number> to register")
-    else: # iterate through columns of the row, checking for instances where the attendance is marked.
+    else:  # iterate through columns of the row, checking for instances where the attendance is marked.
         row_num = redis_client.hget(STUDENT_MAP, username)
         weeks = []
         week_counter = 2
@@ -402,9 +405,34 @@ def attendance_reflection(update, context):
                 week_counter += 1
         print(weeks)
         context.bot.send_message(chat_id=update.message.chat_id,
-                                 text="Our records indicate that you've so far attended reflection sessions for: " + print_arr(
-                                     weeks))
+                                 text="Our records indicate that you've so far attended reflection sessions for: "
+                                      + print_arr(weeks) + ". Please contact a staff member if there is a discrepancy")
 
+
+"""
+Function to know attendance so far for studio sessions
+"""
+
+
+def attendance_studio(update, context):
+    # if not registered
+    username = get_user_id_or_username(update)
+    if not redis_client.hexists(STUDENT_MAP, username):
+        context.bot.send_message(chat_id=update.message.chat_id, text="You've not registered yet. Please send /setup "
+                                                                      "<Student Number> to register")
+    else:  # iterate through columns of the row, checking for instances where the attendance is marked.
+        row_num = redis_client.hget(STUDENT_MAP, username)
+        weeks = []
+        week_counter = 2
+        for i in range(66, 88, 2):
+            col = chr(i)
+            if wks2.acell(f'{col}{row_num}').value == '1':
+                weeks.append("Week " + str(week_counter))
+                week_counter += 1
+        print(weeks)
+        context.bot.send_message(chat_id=update.message.chat_id,
+                                 text="Our records indicate that you've so far attended reflection sessions for: " +
+                                      print_arr(weeks) + ". Please contact a staff member if there is a discrepancy")
 
 """
 Function to get the string version of an array in one line. 
