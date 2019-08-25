@@ -344,11 +344,21 @@ def change_username(update, context):  # (TODO) Review code for avenger vs stude
     else:
         username = get_user_id_or_username()
         student_no = context.args[0]
-        cell = wks1.find(student_no)
-        row_num = cell.row
-        redis_client.hset(STUDENT_MAP, username, row_num)
-        context.bot.send_message(chat_id=update.message.chat_id, text="You've successfully changed your username in "
-                                                                      "our records!")
+        try:
+            global gc
+            global credentials
+            if credentials.access_token_expired:
+                gc.login()
+            cell = wks1.find(student_no)  # Look in reflection sessions
+            row_num = cell.row
+            redis_client.hset(STUDENT_MAP, username, row_num)
+            context.bot.send_message(chat_id=update.message.chat_id, text="You've successfully changed your username.")
+            # store in redis client
+        except gspread.exceptions.CellNotFound:
+            context.bot.send_message(chat_id=update.message.chat_id,
+                                     text="Sorry! Your student number is not registered "
+                                          "for this module. Please contact a staff "
+                                          "member.")
 
 """
 Function to give feedback to the developers.
