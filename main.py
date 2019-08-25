@@ -390,13 +390,15 @@ def attendance_reflection(update, context):
     username = get_user_id_or_username(update)
     if not redis_client.hexists(STUDENT_MAP, username):
         context.bot.send_message(chat_id=update.message.chat_id, text="You've not registered yet. Please send /setup "
-                                                                      "<student Number> to register")
+                                                                      "<Student Number> to register")
     else: # iterate through columns of the row, checking for instances where the attendance is marked.
         row_num = redis_client.hget(STUDENT_MAP, username)
         weeks = []
         week_counter = 2
         for i in range(66, 78):
             col = chr(i)
+            print(col)
+            print(wks1.acell(f'{col}{row_num}').value)
             if wks1.acell(f'{col}{row_num}').value == 1:
                 weeks.append("Week " + str(week_counter))
                 week_counter += 1
