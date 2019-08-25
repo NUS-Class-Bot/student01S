@@ -378,7 +378,7 @@ def feedback(update, context):
                                                                       'this /feedback command, all in the same '
                                                                       'message')
     else:
-        name = update.from_message.first_name
+        name = update.message.from_user.first_name
         username = get_user_id_or_username(update)
         global gc
         global credentials
