@@ -397,9 +397,7 @@ def attendance_reflection(update, context):
         week_counter = 2
         for i in range(66, 78):
             col = chr(i)
-            print(col)
-            print(wks1.acell(f'{col}{row_num}').value)
-            if wks1.acell(f'{col}{row_num}').value == 1:
+            if wks1.acell(f'{col}{row_num}').value == '1':
                 weeks.append("Week " + str(week_counter))
                 week_counter += 1
         print(weeks)
@@ -417,7 +415,6 @@ def print_arr(arr):
     runner = ""
     for item in arr:
         runner += item + " "
-    print(runner)
     return runner
 
 
