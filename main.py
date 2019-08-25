@@ -342,7 +342,7 @@ def change_username(update, context):  # (TODO) Review code for avenger vs stude
                                                                       'command. Eg if your student number is '
                                                                       '123456789, enter /change_username 123456789')
     else:
-        username = get_user_id_or_username()
+        username = get_user_id_or_username(update)
         student_no = context.args[0]
         try:
             global gc
