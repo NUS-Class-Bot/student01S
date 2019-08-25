@@ -362,6 +362,7 @@ def change_username(update, context):  # (TODO) Review code for avenger vs stude
                                           "for this module. Please contact a staff "
                                           "member.")
 
+
 """
 Function to give feedback to the developers.
 """
@@ -406,10 +407,10 @@ def attendance_reflection(update, context):
             if wks1.acell(f'{col}{row_num}').value == '1':
                 weeks.append("Week " + str(week_counter))
                 week_counter += 1
-        print(weeks)
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Our records indicate that you've so far attended reflection sessions for: "
                                       + print_arr(weeks) + ". Please contact a staff member if there is a discrepancy")
+
 
 """
 Function to know attendance so far for studio sessions
@@ -435,10 +436,10 @@ def attendance_studio(update, context):
             if wks2.acell(f'{col}{row_num}').value == '1':
                 weeks.append("Week " + str(week_counter))
                 week_counter += 1
-        print(weeks)
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Our records indicate that you've so far attended studio sessions for: " +
                                       print_arr(weeks) + ". Please contact a staff member if there is a discrepancy")
+
 
 """
 Function to get the string version of an array in one line. 
