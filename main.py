@@ -431,7 +431,7 @@ def attendance_studio(update, context):
                 week_counter += 1
         print(weeks)
         context.bot.send_message(chat_id=update.message.chat_id,
-                                 text="Our records indicate that you've so far attended reflection sessions for: " +
+                                 text="Our records indicate that you've so far attended studio sessions for: " +
                                       print_arr(weeks) + ". Please contact a staff member if there is a discrepancy")
 
 """
@@ -474,6 +474,7 @@ def main():
     dp.add_handler(CommandHandler('change_username', change_username))
     dp.add_handler(CommandHandler('help', help_func))
     dp.add_handler(CommandHandler('attendance_reflection', attendance_reflection))
+    dp.add_handler(CommandHandler('attendance_studio', attendance_studio))
 
     # Start the bot
     updater.start_polling()
