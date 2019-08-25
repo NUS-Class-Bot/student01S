@@ -319,35 +319,36 @@ Function to generate help text.
 def help_func(update, context):
     context.bot.send_message(chat_id=update.message.chat_id,
                              text="Here are the available functions in the bot:\n"
+                                  "For students: \n"
                                   "/setup <student number>: to register yourself.\n"
                                   "/attend <token> to mark your attendance. Token will be provided by cluster leader.\n"
-                                  "/feedback <feedback> to give feedback or report bugs to the developers.\n"
+                                  "For avengers/tutors: \n"
                                   "/start_session <number of students> to mark the attendance for your group of "
-                                  "avengers.\n "
-                                  "/stop_session to stop your current running session.")
+                                  "avengers.\n"
+                                  "/stop_session to stop your current running session."
+                                  "For all: \n"
+                                  "/feedback <feedback> to give feedback or report bugs to the developers.\n")
 
 
 """
 Function to change the username of bot user.
 """
 
-# def change_username(update, context):  # (TODO) Review code for avenger vs student vs tutor reflection
-#     # just extract username and update in reddis client. Ask chai: can we do is?
-#     if len(context.args) == 0:
-#         context.bot.send_message(chat_id=update.message.chat_id, text='Please enter your student number along with the '
-#                                                                       'command. Eg if your student number is '
-#                                                                       '123456789, enter /change_username 123456789')
-#         return
-#     username = get_user_id_or_username()
-#     student_no = context.args[0]
-#     cell = wks.find(student_no)
-#     row_num = cell.row
-#     redis_client.hset(STUDENT_MAP, username, row_num)
-#     context.bot.send_message(chat_id=update.message.chat_id, text="You're successfully registered! Please wait "
-#                                                                   "for your cluster leader to give you an attendance "
-#                                                                   "token")
-#     return
-#
+
+def change_username(update, context):  # (TODO) Review code for avenger vs student vs tutor reflection
+    # just extract username and update in reddis client. Ask chai: can we do is?
+    if len(context.args) == 0:
+        context.bot.send_message(chat_id=update.message.chat_id, text='Please enter your student number along with the '
+                                                                      'command. Eg if your student number is '
+                                                                      '123456789, enter /change_username 123456789')
+    else:
+        username = get_user_id_or_username()
+        student_no = context.args[0]
+        cell = wks1.find(student_no)
+        row_num = cell.row
+        redis_client.hset(STUDENT_MAP, username, row_num)
+        context.bot.send_message(chat_id=update.message.chat_id, text="You've successfully changed your username in "
+                                                                      "our records!")
 
 """
 Function to give feedback to the developers.
@@ -380,7 +381,7 @@ def attendance_reflection(update, context):
     if not redis_client.hexists(STUDENT_MAP, username):
         context.bot.send_message(chat_id=update.message.chat_id, text="You've not registered yet. Please send /setup "
                                                                       "<student Number> to register")
-    else:
+    else: # iterate through columns of the row, checking for instances where the attendance is marked.
         row_num = redis_client.hget(STUDENT_MAP, username)
         weeks = []
         week_counter = 2
@@ -433,7 +434,7 @@ def main():
     dp.add_handler(CommandHandler('attend', attend))
     dp.add_handler(CommandHandler('start_session', start_session))
     dp.add_handler(CommandHandler('stop_session', stop_session))
-    # dp.add_handler(CommandHandler('change_username', change_username))
+    dp.add_handler(CommandHandler('change_username', change_username))
     dp.add_handler(CommandHandler('help', help_func))
     dp.add_handler(CommandHandler('attendance_reflection', attendance_reflection))
 
