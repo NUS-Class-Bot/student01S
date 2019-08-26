@@ -70,9 +70,6 @@ gc = gspread.authorize(credentials)
 wks1 = gc.open("CS1101S Reflection Attendance").sheet1  # For Reflection
 wks2 = gc.open("CS1101S Studio Attendance").sheet1  # For studio
 wk3 = gc.open("CS1101S Bot Feedback").sheet1  # For Feedback
-col_name_attend = get_week_stu()
-col_name_comment = chr(ord(col_name_attend) + 1)
-col_name_reflect = get_week_ref()
 
 """
 Function to get username or user ID depending on what is available.
@@ -257,6 +254,7 @@ def attend(update, context):
     if credentials.access_token_expired:
         gc.login()
     if tipe == "r":  # reflection session
+        col_name_reflect = get_week_ref()
         # check if already attended for current week
         row_name = redis_client.hget(STUDENT_MAP,
                                      username)  # (TODO) make sure the row number are same for each student in both the different sheets
@@ -288,6 +286,8 @@ def attend(update, context):
 
     else:  # studio session
         # check if already attended for current week
+        col_name_attend = get_week_stu()
+        col_name_comment = chr(ord(col_name_attend) + 1)
         row_name = redis_client.hget(STUDENT_MAP,
                                      username)  # (TODO) make sure the row number are same for each student in both
         # the different sheets
