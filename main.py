@@ -52,7 +52,8 @@ logger = logging.getLogger(__name__)
 
 # Redis - stores mapping of Telegram username to Row Number on Google Spreadsheet.
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
-redis_pickle_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=False)
+
+# Dictionaries storing the various mappings for the Telegram bot
 STUDENT_MAP = "STUDENT_MAP"  # Maps student's telegram @username to row num in spreadsheet
 TUTOR_MAP = "TUTOR_MAP"  # Maps @username of staff to state ("no"/token)
 TOKEN_MAP = "TOKEN_MAP"  # Maps the set of active tokens to a capacity
@@ -71,12 +72,11 @@ wks1 = gc.open("CS1101S Reflection Attendance").sheet1  # For Reflection
 wks2 = gc.open("CS1101S Studio Attendance").sheet1  # For studio
 wk3 = gc.open("CS1101S Bot Feedback").sheet1  # For Feedback
 
-"""
-Function to get username or user ID depending on what is available.
-"""
-
 
 def get_user_id_or_username(update):
+    """
+    Function to get username or user ID depending on what is available.
+    """
     user_id = update.message.from_user.id
     username = update.message.from_user.username
     if username:
@@ -87,12 +87,10 @@ def get_user_id_or_username(update):
 
 ##### Tutor #######
 
-"""
-Function to start an attendance session.
-"""
-
-
 def start_session(update, context):
+    """
+    Function to start an attendance session.
+    """
     # Store tutor usernames
     username = get_user_id_or_username(update)
     if not (redis_client.hexists(TUTOR_MAP, username) or redis_client.hexists(AVENGER_MAP, username)):
@@ -135,13 +133,10 @@ def start_session(update, context):
                                  text=f'You have successfully started a Studio Session. '
                                       f'Your token is {token}. Please write it on a board to share it with students')
 
-
-"""
-Function to stop an attendance session.
-"""
-
-
 def stop_session(update, context):
+    """
+    Function to stop an attendance session.
+    """
     username = get_user_id_or_username(update)
     if not (redis_client.hexists(TUTOR_MAP, username) or redis_client.hexists(AVENGER_MAP, username)):
         context.bot.send_message(chat_id=update.message.chat_id,
@@ -166,37 +161,29 @@ def stop_session(update, context):
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Your Studio Session has successfully stopped. Thanks!")
 
-
-"""
-Function to generate the attendance token hash.
-"""
-
-
 def generate_hash():
+    """
+    Function to generate the attendance token hash.
+    """
     token = hash(time.time()) % 100000000
     return token
 
 
 ##### Student ##########
 
-"""
-Start function for the bot.
-"""
-
-
 def start(update, context):
+    """
+    Start function for the bot.
+    """
     context.bot.send_message(chat_id=update.message.chat_id,
                              text="Welcome to CS1101S Cadet! This bot records your attendance for reflection sessions."
                                   "Please send /setup <student number> to get started.")
 
-
-"""
-Function to setup the username of student user and
-store it in the key-value database. 
-"""
-
-
 def setup(update, context):
+    """
+    Function to setup the username of student user and
+    store it in the key-value database. 
+    """
     # check if no args
     if len(context.args) == 0:
         context.bot.send_message(chat_id=update.message.chat_id, text='Please enter your student number along with the '
@@ -228,13 +215,10 @@ def setup(update, context):
                                                                       "for this module. Please contact a staff "
                                                                       "member.")
 
-
-"""
-Function to mark attendance of bot user.
-"""
-
-
 def attend(update, context):
+    """
+    Function to mark attendance of bot user.
+    """
     # check if no args
     if len(context.args) == 0:
         context.bot.send_message(chat_id=update.message.chat_id, text='Insufficient number of arguments. Please enter '
@@ -315,13 +299,10 @@ def attend(update, context):
                 redis_client.hset(TOKEN_MAP, token, curr_capacity - 1)  # reduce capacity
                 return
 
-
-"""
-Function to generate help text.
-"""
-
-
 def help_func(update, context):
+    """
+    Function to generate help text.
+    """
     context.bot.send_message(chat_id=update.message.chat_id,
                              text="Here are the available functions in the bot:\n"
                                   "For students: \n"
@@ -336,13 +317,10 @@ def help_func(update, context):
                                   "For all: \n"
                                   "/feedback <feedback> to give feedback or report bugs to the developers.\n")
 
-
-"""
-Function to change the username of bot user.
-"""
-
-
 def change_username(update, context):  # (TODO) Review code for avenger vs student vs tutor reflection
+    """
+    Function to change the username of bot user.
+    """
     if len(context.args) == 0:
         context.bot.send_message(chat_id=update.message.chat_id, text='Please enter your student number along with the '
                                                                       'command. Eg if your student number is '
@@ -366,13 +344,10 @@ def change_username(update, context):  # (TODO) Review code for avenger vs stude
                                           "for this module. Please contact a staff "
                                           "member.")
 
-
-"""
-Function to give feedback to the developers.
-"""
-
-
 def feedback(update, context):
+    """
+    Function to give feedback to the developers.
+    """
     if len(context.args) == 0:
         context.bot.send_message(chat_id=update.message.chat_id, text='Please send your valuable feedback along with '
                                                                       'this /feedback command, all in the same '
@@ -391,13 +366,10 @@ def feedback(update, context):
         redis_client.hset(TOKEN_MAP, "feedback", str(int(row) + 1))  # update row num for other feedback
         context.bot.send_message(chat_id=update.message.chat_id, text="Thank you so much for your valuable feedback!")
 
-
-"""
-Function to know attendance so far for reflection sessions
-"""
-
-
 def attendance_reflection(update, context):
+    """
+    Function to know attendance so far for reflection sessions
+    """
     # if not registered
     username = get_user_id_or_username(update)
     if not redis_client.hexists(STUDENT_MAP, username):
@@ -420,13 +392,10 @@ def attendance_reflection(update, context):
                                  text="Our records indicate that you've so far attended reflection sessions for: "
                                       + print_arr(weeks) + ". Please contact a staff member if there is a discrepancy")
 
-
-"""
-Function to know attendance so far for studio sessions
-"""
-
-
 def attendance_studio(update, context):
+    """
+    Function to know attendance so far for studio sessions
+    """
     # if not registered
     username = get_user_id_or_username(update)
     if not redis_client.hexists(STUDENT_MAP, username):
@@ -449,13 +418,10 @@ def attendance_studio(update, context):
                                  text="Our records indicate that you've so far attended studio sessions for: " +
                                       print_arr(weeks) + ". Please contact a staff member if there is a discrepancy")
 
-
-"""
-Function to get the string version of an array in one line. 
-"""
-
-
 def print_arr(arr):
+    """
+    Function to get the string version of an array in one line. 
+    """
     runner = ""
     for item in arr:
         runner += item + " "
