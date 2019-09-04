@@ -56,12 +56,12 @@ redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_respo
 # Dictionaries storing the various mappings for the Telegram bot
 STUDENT_MAP = "STUDENT_MAP"  # Maps student's telegram @username to row num in spreadsheet
 TUTOR_MAP = "TUTOR_MAP"  # Maps @username of staff to state ("no"/token)
-TOKEN_MAP = "TOKEN_MAP"  # Maps the set of active tokens to a capacity and type
-AVENGER_MAP = "AVENGER_MAP"  # Maps @username of avenger to token dict, storing token state and token number
+TOKEN_MAP = "TOKEN_MAP"  # Maps the set of active tokens to a capacity, type, status and current students
+AVENGER_MAP = "AVENGER_MAP"  # Maps @username of avenger to token number
 
 # for Feedback
 if not redis_client.hexists(TOKEN_MAP, "feedback"):
-    redis_client.hset(TOKEN_MAP, "feedback", json.dumps({'capacity': 2, 'type': 'feedback'}))
+    redis_client.hset(TOKEN_MAP, "feedback", json.dumps({'capacity': 2, 'active': True, 'type': 'feedback', 'students': []}))
 
 # Google Spreadsheet
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
@@ -115,7 +115,9 @@ def start_session(update, context):
         redis_client.hset(TUTOR_MAP, username, token)  # Make tutor active. Store string value of token as value
         token = {
             'capacity': int(context.args(0)),
-            'type': 'r'
+            'type': 'r',
+            'active': True,
+            'students': []
         }
         redis_client.hset(TOKEN_MAP, token, json.dumps(token))  # Activate Token and store capacity
         context.bot.send_message(chat_id=update.message.chat_id, text=f'You have successfully started a Reflection '
@@ -123,20 +125,18 @@ def start_session(update, context):
                                                                       f'Your token is {token}. Please write it on a '
                                                                       f'board to share it with students')
     else:  # avenger
-        avenger_token = json.loads(redis_client.hget(AVENGER_MAP, username))
-        if avenger_token[active]:
+        avenger_token = redis_client.hget(AVENGER_MAP, username)
+        if json.loads(redis_client.hget(TOKEN_MAP, avenger_token))['active']:
             context.bot.send_message(chat_id=update.message.chat_id,
                                      text="A session is already running. Please use /stop_session to stop it")
             return
 
-        new_token = {
-            'active': True,
-            'token': token
-        }
-        redis_client.hset(AVENGER_MAP, username, json.dumps(new_token))
+        redis_client.hset(AVENGER_MAP, username, token)
         token = {
             'capacity': int(context.args(0)),
             'type': 's'
+            'active': True,
+            'students': []
         }
         redis_client.hset(TOKEN_MAP, token, json.dumps(token))
         context.bot.send_message(chat_id=update.message.chat_id,
@@ -152,23 +152,24 @@ def stop_session(update, context):
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Sorry! You're not registered as a staff member and hence cannot use this command")
         return
-    if redis_client.hget(TUTOR_MAP, username) == "No" or (not json.loads(redis_client.hget(AVENGER_MAP, username))['active']):
+    is_token_active = redis_client.hget(TUTOR_MAP, username) == "No" or (not json.loads(redis_client.hget(TOKEN_MAP, redis_client.hget(AVENGER_MAP, username)))['active'])
+    if is_token_active:
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="You've not started a session yet. Please send /start_session to start a session")
         return
     # stop the session
-    redis_client.hdel(TOKEN_MAP, token) # Delete token from active tokens
     if redis_client.hexists(TUTOR_MAP, username):
         token = redis_client.hget(TUTOR_MAP, username)
         redis_client.hset(TUTOR_MAP, username, "No")  # Tutor is not active anymore
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Your Reflection Session has successfully stopped. Thanks!")
     else:
-        token = json.loads(redis_client.hget(AVENGER_MAP, username))
-        token['active'] = False
-        redis_client.hset(AVENGER_MAP, username, json.dumps(token))
+        token = redis_client.hget(AVENGER_MAP, username)
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Your Studio Session has successfully stopped. Thanks!")
+    token_in_token_map = json.loads(redis_client.hget(TOKEN_MAP, token))
+    token_in_token_map['active'] = False
+    redis_client.hset(TOKEN_MAP, token_in_token_map)
 
 def generate_hash():
     """
@@ -246,7 +247,7 @@ def attend(update, context):
     global credentials
     if credentials.access_token_expired:
         gc.login()
-    if tipe == "r":  # reflection session
+    if token_type == "r":  # reflection session
         col_name_reflect = get_week_ref()
         # check if already attended for current week
         row_name = redis_client.hget(STUDENT_MAP,
@@ -275,7 +276,10 @@ def attend(update, context):
                 context.bot.send_message(chat_id=update.message.chat_id, text="Your attendance for this week has been "
                                                                               "successfully marked. Thanks!")
                 token_map = json.loads(redis_client.hget(TOKEN_MAP, token))
+                student_list = token_map['students'].copy()
+                student_list.append(username)
                 token_map['capacity'] -= 1
+                token_map['students'] = student_list
                 redis_client.hset(TOKEN_MAP, token, token_map)  # reduce capacity
                 return
 
@@ -308,7 +312,10 @@ def attend(update, context):
                 context.bot.send_message(chat_id=update.message.chat_id, text="Your attendance for this week has been "
                                                                               "successfully marked. Thanks!")
                 token_map = json.loads(redis_client.hget(TOKEN_MAP, token))
+                student_list = token_map['students'].copy()
+                student_list.append(username)
                 token_map['capacity'] -= 1
+                token_map['students'] = student_list
                 redis_client.hset(TOKEN_MAP, token, token_map)  # reduce capacity
                 return
 
