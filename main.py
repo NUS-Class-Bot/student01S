@@ -112,33 +112,35 @@ def start_session(update, context):
                                      text="A session is already running. Please use /stop_session to stop it")
             return
 
+        redis_client.hdel(TOKEN_MAP, redis_client.hget(TUTOR_MAP, username))
         redis_client.hset(TUTOR_MAP, username, token)  # Make tutor active. Store string value of token as value
-        token = {
-            'capacity': int(context.args(0)),
+        token_data = {
+            'capacity': int(context.args[0]),
             'type': 'r',
             'active': True,
             'students': []
         }
-        redis_client.hset(TOKEN_MAP, token, json.dumps(token))  # Activate Token and store capacity
+        redis_client.hset(TOKEN_MAP, token, json.dumps(token_data))  # Activate Token and store capacity
         context.bot.send_message(chat_id=update.message.chat_id, text=f'You have successfully started a Reflection '
                                                                       f'Session. '
                                                                       f'Your token is {token}. Please write it on a '
                                                                       f'board to share it with students')
     else:  # avenger
         avenger_token = redis_client.hget(AVENGER_MAP, username)
-        if json.loads(redis_client.hget(TOKEN_MAP, avenger_token))['active']:
+        if avenger_token != "No" and json.loads(redis_client.hget(TOKEN_MAP, avenger_token))['active']:
             context.bot.send_message(chat_id=update.message.chat_id,
                                      text="A session is already running. Please use /stop_session to stop it")
             return
 
+        redis_client.hdel(TOKEN_MAP, redis_client.hget(AVENGER_MAP, username))
         redis_client.hset(AVENGER_MAP, username, token)
-        token = {
-            'capacity': int(context.args(0)),
-            'type': 's'
+        token_data = {
+            'capacity': int(context.args[0]),
+            'type': 's',
             'active': True,
             'students': []
         }
-        redis_client.hset(TOKEN_MAP, token, json.dumps(token))
+        redis_client.hset(TOKEN_MAP, token, json.dumps(token_data))
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text=f'You have successfully started a Studio Session. '
                                       f'Your token is {token}. Please write it on a board to share it with students')
@@ -152,8 +154,8 @@ def stop_session(update, context):
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Sorry! You're not registered as a staff member and hence cannot use this command")
         return
-    is_token_active = redis_client.hget(TUTOR_MAP, username) == "No" or (not json.loads(redis_client.hget(TOKEN_MAP, redis_client.hget(AVENGER_MAP, username)))['active'])
-    if is_token_active:
+    is_token_inactive = (redis_client.hget(TUTOR_MAP, username) == "No") or (redis_client.hget(AVENGER_MAP, username) == "No") or (not json.loads(redis_client.hget(TOKEN_MAP, redis_client.hget(AVENGER_MAP, username)))['active'])
+    if is_token_inactive:
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="You've not started a session yet. Please send /start_session to start a session")
         return
@@ -169,7 +171,7 @@ def stop_session(update, context):
                                  text="Your Studio Session has successfully stopped. Thanks!")
     token_in_token_map = json.loads(redis_client.hget(TOKEN_MAP, token))
     token_in_token_map['active'] = False
-    redis_client.hset(TOKEN_MAP, token_in_token_map)
+    redis_client.hset(TOKEN_MAP, token, json.dumps(token_in_token_map))
 
 def generate_hash():
     """
@@ -242,6 +244,10 @@ def attend(update, context):
         return
     # decide reflection or studio
     token = context.args[0]
+    if not redis_client.hexists(TOKEN_MAP, token):  # Not active token
+        context.bot.send_message(chat_id=update.message.chat_id,
+                                    text="Token doesn't exist or has expired. Please contact your tutor.")
+        return
     token_type = json.loads(redis_client.hget(TOKEN_MAP, token))['type']
     global gc
     global credentials
@@ -253,17 +259,12 @@ def attend(update, context):
         row_name = redis_client.hget(STUDENT_MAP,
                                      username)  # (TODO) make sure the row number are same for each student in both the different sheets
         val = wks1.acell(f'{col_name_reflect}{row_name}').value  # check reflection sheet
-        if val == 1:
+        if val == "1":
             context.bot.send_message(chat_id=update.message.chat_id,
-                                     text="Your attendance for this week has already been"
+                                     text="Your attendance for this week has already been "
                                           "marked. Thanks!")
         else:
             # Token Logic
-            token = context.args[0]
-            if not redis_client.hexists(TOKEN_MAP, token):  # Not active token
-                context.bot.send_message(chat_id=update.message.chat_id,
-                                         text="Token doesn't exist or has expired. Please contact your tutor.")
-                return
             curr_capacity = json.loads(redis_client.hget(TOKEN_MAP, token))['capacity']
             if curr_capacity == 0:
                 context.bot.send_message(chat_id=update.message.chat_id,
@@ -283,7 +284,7 @@ def attend(update, context):
                 redis_client.hset(TOKEN_MAP, token, token_map)  # reduce capacity
                 return
 
-    else:  # studio session
+    elif token_type == "s":  # studio session
         # check if already attended for current week
         col_name_attend = get_week_stu()
         col_name_comment = chr(ord(col_name_attend) + 1)
@@ -291,9 +292,9 @@ def attend(update, context):
                                      username)  # (TODO) make sure the row number are same for each student in both
         # the different sheets
         val = wks2.acell(f'{col_name_attend}{row_name}').value
-        if val == 1:
+        if val == "1":
             context.bot.send_message(chat_id=update.message.chat_id,
-                                     text="Your attendance for this week has already been"
+                                     text="Your attendance for this week has already been "
                                           "marked. Thanks!")
         else:
             if not redis_client.hexists(TOKEN_MAP, token):  # Not active token
@@ -316,7 +317,7 @@ def attend(update, context):
                 student_list.append(username)
                 token_map['capacity'] -= 1
                 token_map['students'] = student_list
-                redis_client.hset(TOKEN_MAP, token, token_map)  # reduce capacity
+                redis_client.hset(TOKEN_MAP, token, json.dumps(token_map))  # reduce capacity
                 return
 
 def help_func(update, context):
@@ -440,6 +441,16 @@ def attendance_studio(update, context):
                                  text="Our records indicate that you've so far attended studio sessions for: " +
                                       print_arr(weeks) + ". Please contact a staff member if there is a discrepancy")
 
+def comment(update, context):
+    """
+    Function to comment on students who attended tutorial
+    """
+    username = get_username_or_id(update)
+    token = redis_client.hget(AVENGER_MAP, username)
+    students = json.loads(redis_client.hget(TOKEN_MAP, token))['students']
+    context.bot.send_message(chat_id=update.message.chat_id,
+                             text="Here is the list of students: " + str(students))
+
 def print_arr(arr):
     """
     Function to get the string version of an array in one line. 
@@ -453,7 +464,7 @@ def print_arr(arr):
 def main():
     """Start the bot"""
     # Create an event handler, # (TODO) hide key
-    updater = Updater('719416058:AAFos4GnAi1ufpWPCqKY3vc3iBmjAckWVLY', use_context=True)
+    updater = Updater('987918161:AAFl840bxZUeghPLldBXxrxAKQeGueb2S0M', use_context=True)
 
     # Setup module/admin staff in Redis database
     with open('people.json') as people_json:
@@ -463,8 +474,8 @@ def main():
         for admin_member in data['admin']:
             redis_client.hset(TUTOR_MAP, admin_member, "No")
         for avenger in data['avenger']:
-            redis_client.hset(AVENGER_MAP, avenger, json.dumps({}))
-        redis_client.hset(AVENGER_MAP, "raivatshah", json.dumps({}))  # for testing.
+            redis_client.hset(AVENGER_MAP, avenger, "No")
+        redis_client.hset(AVENGER_MAP, "raivatshah", "No")  # for testing.
 
     # Get dispatcher to register handlers
     dp = updater.dispatcher
@@ -480,6 +491,7 @@ def main():
     dp.add_handler(CommandHandler('attendance_reflection', attendance_reflection))
     dp.add_handler(CommandHandler('attendance_studio', attendance_studio))
     dp.add_handler(CommandHandler('feedback', feedback))
+    dp.add_handler(CommandHandler('comment', comment))
 
     # Start the bot
     updater.start_polling()
