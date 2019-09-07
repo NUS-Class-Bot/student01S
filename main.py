@@ -70,7 +70,11 @@ credentials = ServiceAccountCredentials.from_json_keyfile_name('CS1101S Bot-9936
 gc = gspread.authorize(credentials)
 wks1 = gc.open("CS1101S Reflection Attendance").sheet1  # For Reflection
 wks2 = gc.open("CS1101S Studio Attendance").sheet1  # For studio
-wk3 = gc.open("CS1101S Bot Feedback").sheet1  # For Feedback
+wk3 = gc.open("CS1101S Bot Feedback").sheet1  # For Bot Feedback
+wk4 = gc.open("CS1101S Avenger Feedback").sheet1 # For Avenger Feedback 
+"""
+Function to get username or user ID depending on what is available.
+"""
 
 
 def get_user_id_or_username(update):
@@ -457,7 +461,7 @@ def main():
     dp.add_handler(CommandHandler('help', help_func))
     dp.add_handler(CommandHandler('attendance_reflection', attendance_reflection))
     dp.add_handler(CommandHandler('attendance_studio', attendance_studio))
-    dp.add_handler(CommandHandler('feedback', feedback))
+    dp.add_handler(CommandHandler('bot_feedback', bot_feedback))
 
     # Start the bot
     updater.start_polling()
