@@ -271,7 +271,7 @@ def attend(update, context):
         # check if already attended for current week
         row_name = json.loads(redis_client.hget(STUDENT_MAP, username))['row']  # (TODO) make sure the row number are same for each student in both the different sheets
         val = wks1.acell(f'{col_name_reflect}{row_name}').value  # check reflection sheet
-        if val == "1":
+        if val == 1:
             context.bot.send_message(chat_id=update.message.chat_id,
                                      text="Your attendance for this week has already been "
                                           "marked. Thanks!")
@@ -300,7 +300,7 @@ def attend(update, context):
         row_name = json.loads(redis_client.hget(STUDENT_MAP, username))['row']  # (TODO) make sure the row number are same for each student in both
         # the different sheets
         val = wks2.acell(f'{col_name_attend}{row_name}').value
-        if val == "1":
+        if val == 1:
             context.bot.send_message(chat_id=update.message.chat_id,
                                      text="Your attendance for this week has already been "
                                           "marked. Thanks!")
