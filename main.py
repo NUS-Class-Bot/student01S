@@ -75,11 +75,7 @@ gc = gspread.authorize(credentials)
 wks1 = gc.open("CS1101S Reflection Attendance").sheet1  # For Reflection
 wks2 = gc.open("CS1101S Studio Attendance").sheet1  # For studio
 wk3 = gc.open("CS1101S Bot Feedback").sheet1  # For Bot Feedback
-wk4 = gc.open("CS1101S Avenger Feedback").sheet1 # For Avenger Feedback 
-"""
-Function to get username or user ID depending on what is available.
-"""
-
+# wk4 = gc.open("CS1101S Avenger Feedback").sheet1 # For Avenger Feedback, disabled because this is giving error
 
 def get_user_id_or_username(update):
     """
@@ -275,7 +271,7 @@ def attend(update, context):
         # check if already attended for current week
         row_name = json.loads(redis_client.hget(STUDENT_MAP, username))['row']  # (TODO) make sure the row number are same for each student in both the different sheets
         val = wks1.acell(f'{col_name_reflect}{row_name}').value  # check reflection sheet
-        if val == 1:
+        if val == "1":
             context.bot.send_message(chat_id=update.message.chat_id,
                                      text="Your attendance for this week has already been "
                                           "marked. Thanks!")
@@ -304,7 +300,7 @@ def attend(update, context):
         row_name = json.loads(redis_client.hget(STUDENT_MAP, username))['row']  # (TODO) make sure the row number are same for each student in both
         # the different sheets
         val = wks2.acell(f'{col_name_attend}{row_name}').value
-        if val == 1:
+        if val == "1":
             context.bot.send_message(chat_id=update.message.chat_id,
                                      text="Your attendance for this week has already been "
                                           "marked. Thanks!")
@@ -382,7 +378,7 @@ def change_username(update, context):  # (TODO) Review code for avenger vs stude
                                           "for this module. Please contact a staff "
                                           "member.")
 
-def feedback(update, context):
+def bot_feedback(update, context):
     """
     Function to give feedback to the developers.
     """
