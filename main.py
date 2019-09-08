@@ -162,7 +162,7 @@ def stop_session(update, context):
     # stop the session
     if redis_client.hexists(TUTOR_MAP, username):
         token = redis_client.hget(TUTOR_MAP, username)
-        if (token == "No") or (not json.loads(TOKEN_MAP, token)['active']):
+        if (token == "No") or (not json.loads(redis_client.hget(TOKEN_MAP, token))['active']):
             context.bot.send_message(chat_id=update.message.chat_id,
                                  text="You've not started a session yet. Please send /start_session to start a session")
             return
@@ -461,6 +461,10 @@ def comment(update, context):
     username = get_user_id_or_username(update)
     token = redis_client.hget(AVENGER_MAP, username)
     students = json.loads(redis_client.hget(TOKEN_MAP, token))['students']
+    if len(students) == 0:
+        context.bot.send_message(chat_id=update.message.chat_id,
+                                 text="No students have signed up yet!")
+        return ConversationHandler.END    
     reply_keyboard = [[i] for i in students]
     context.bot.send_message(chat_id=update.message.chat_id,
                              text="Select a student from the list below. Type /cancel to cancel the process.",
