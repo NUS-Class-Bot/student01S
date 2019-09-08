@@ -59,7 +59,7 @@ redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_respo
 
 # Dictionaries storing the various mappings for the Telegram bot
 STUDENT_MAP = "STUDENT_MAP"  # Maps student's telegram @username to row num and username
-USERNAME_MAP = "USERNAME_MAP" # Maps student's setup username to their telegram username/ID
+USERNAME_MAP = "USERNAME_MAP" # Maps student's name to their telegram username/ID
 TUTOR_MAP = "TUTOR_MAP"  # Maps @username of staff to state ("no"/token)
 TOKEN_MAP = "TOKEN_MAP"  # Maps the set of active tokens to a capacity, type, status and current students
 AVENGER_MAP = "AVENGER_MAP"  # Maps @username of avenger to token number
@@ -228,10 +228,10 @@ def setup(update, context):
         row_num = cell.row
         student_details = {
             'row': row_num,
-            'name': student_no
+            'name': wks2.acell(f'A{row_num}').value
         }
         redis_client.hset(STUDENT_MAP, username, json.dumps(student_details))
-        redis_client.hset(USERNAME_MAP, student_no, username)
+        redis_client.hset(USERNAME_MAP, student_details['name'], username)
         context.bot.send_message(chat_id=update.message.chat_id, text="You're successfully registered! Please wait "
                                                                       "for your tutor to give you an attendance token")
         # store in redis client
@@ -366,10 +366,10 @@ def change_username(update, context):  # (TODO) Review code for avenger vs stude
             row_num = cell.row
             student_details = {
                 'row': row_num,
-                'name': student_no
+                'name': wks2.acell(f'A{row_num}').value
             }
             redis_client.hset(STUDENT_MAP, username, json.dumps(student_details))
-            redis_client.hset(USERNAME_MAP, student_no, username)
+            redis_client.hset(USERNAME_MAP, student_details['name'], username)
             context.bot.send_message(chat_id=update.message.chat_id, text="You've successfully changed your username.")
             # store in redis client
         except gspread.exceptions.CellNotFound:
@@ -468,7 +468,7 @@ def comment(update, context):
     reply_keyboard = [[i] for i in students]
     context.bot.send_message(chat_id=update.message.chat_id,
                              text="Select a student from the list below. Type /cancel to cancel the process.",
-                             reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+                             reply_markup=ReplyKeyboardMarkup(reply_keyboard))
     return SELECT_STUDENT
 
 def select_student(update, context):
