@@ -445,7 +445,7 @@ def attendance_studio(update, context):
         row_num = json.loads(redis_client.hget(STUDENT_MAP, username))['row']
         weeks = []
         week_counter = 2
-        for i in range(66, 88, 2):
+        for i in range(67, 90, 2):
             col = chr(i)
             if wks2.acell(f'{col}{row_num}').value == '1':
                 weeks.append("Week " + str(week_counter))
