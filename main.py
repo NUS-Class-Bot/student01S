@@ -459,7 +459,17 @@ def comment(update, context):
     Function to comment on students who attended tutorial
     """
     username = get_user_id_or_username(update)
+    if not redis_client.hexists(AVENGER_MAP, username):
+        context.bot.send_message(chat_id=update.message.chat_id,
+                                 text="Sorry! You're not registered as an avenger and hence cannot use this command.")
+        return ConversationHandler.END
+
     token = redis_client.hget(AVENGER_MAP, username)
+    if token == "No":
+        context.bot.send_message(chat_id=update.message.chat_id,
+                                 text="Sorry! Seems like no previous session is registered for you to comment on.")
+        return ConversationHandler.END
+
     students = json.loads(redis_client.hget(TOKEN_MAP, token))['students']
     if len(students) == 0:
         context.bot.send_message(chat_id=update.message.chat_id,
