@@ -519,22 +519,31 @@ def print_arr(arr):
         runner += item + " "
     return runner
 
+def init_data():
+    """
+    Setup initial data in the Redis database.
+    """
+    # Setup module/admin staff in Redis database
+    with open('people.json') as people_json:
+        data = json.load(people_json)
+        for staff_member in data['staff']:
+            if not redis_client.hexists(TUTOR_MAP, staff_member):
+                redis_client.hset(TUTOR_MAP, staff_member, "No")
+        for admin_member in data['admin']:
+            if not redis_client.hexists(TUTOR_MAP, admin_member):
+                redis_client.hset(TUTOR_MAP, admin_member, "No")
+        for avenger in data['avenger']:
+            if not redis_client.hexists(AVENGER_MAP, avenger):
+                redis_client.hset(AVENGER_MAP, avenger, "No")
+        redis_client.hset(AVENGER_MAP, "raivatshah", "No")  # for testing.
 
 def main():
     """Start the bot"""
     # Create an event handler, # (TODO) hide key
     updater = Updater('***REMOVED***', use_context=True)
 
-    # Setup module/admin staff in Redis database
-    with open('people.json') as people_json:
-        data = json.load(people_json)
-        for staff_member in data['staff']:
-            redis_client.hset(TUTOR_MAP, staff_member, "No")
-        for admin_member in data['admin']:
-            redis_client.hset(TUTOR_MAP, admin_member, "No")
-        for avenger in data['avenger']:
-            redis_client.hset(AVENGER_MAP, avenger, "No")
-        redis_client.hset(AVENGER_MAP, "raivatshah", "No")  # for testing.
+    # Setup data in the Redis database
+    init_data()
 
     # Get dispatcher to register handlers
     dp = updater.dispatcher
