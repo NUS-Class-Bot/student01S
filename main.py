@@ -1,4 +1,12 @@
-""" CS1101S Attendance Bot """
+""" 
+CS1101S Attendance Bot 
+
+Current Version Developed by Chaitanya Baranwal and Raivat Shah
+
+Project founded by Advay Pal, Chaitanya Baranwal and Raivat Shah. 
+
+Released Under MIT License.
+"""
 # Imports
 import os
 import json
@@ -30,7 +38,6 @@ def get_week_ref():
                 return data[month][date_range]
     return 'Z'
 
-
 # Function to determine column based on date for Studio Spreadsheet
 def get_week_stu():
     cur_time = time.asctime()
@@ -45,7 +52,6 @@ def get_week_stu():
             if start <= date <= end:
                 return data[month][date_range]
     return 'Z'
-
 
 # Enable logging
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
@@ -64,7 +70,7 @@ TUTOR_MAP = "TUTOR_MAP"  # Maps @username of staff to state ("no"/token)
 TOKEN_MAP = "TOKEN_MAP"  # Maps the set of active tokens to a capacity, type, status and current students
 AVENGER_MAP = "AVENGER_MAP"  # Maps @username of avenger to token number
 
-# for Feedback
+# for Feedback. Stores current row_num for feedback in the Google Spreadsheet
 if not redis_client.hexists(TOKEN_MAP, "feedback"):
     redis_client.hset(TOKEN_MAP, "feedback", json.dumps({'capacity': 2, 'active': True, 'type': 'feedback', 'students': []}))
 
@@ -93,7 +99,7 @@ def get_user_id_or_username(update):
 
 def start_session(update, context):
     """
-    Function to start an attendance session.
+    Function to start an attendance taking session.
     """
     # Store tutor usernames
     username = get_user_id_or_username(update)
@@ -513,7 +519,7 @@ def print_arr(arr):
 def main():
     """Start the bot"""
     # Create an event handler, # (TODO) hide key
-    updater = Updater('***REMOVED***', use_context=True)
+    updater = Updater('os.environ.get("TELEKEY")', use_context=True)
 
     # Setup module/admin staff in Redis database
     with open('people.json') as people_json:
