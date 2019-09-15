@@ -2,8 +2,9 @@
 CS1101S Attendance Bot 
 
 Current Version Developed by Chaitanya Baranwal and Raivat Shah
-
 Project founded by Advay Pal, Chaitanya Baranwal and Raivat Shah. 
+
+Project supervised by A/P Martin Henz and Visiting Professor Tobias Wrigstad
 
 Released Under MIT License.
 """
@@ -17,7 +18,6 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import redis
 import time
-
 
 #######################################
 ### SETUP REQUIRED GLOBAL VARIABLES ###
@@ -93,7 +93,6 @@ def get_user_id_or_username(update):
         return username
     else:
         return user_id
-
 
 ##### Tutor #######
 
@@ -194,7 +193,6 @@ def generate_hash():
     token = hash(time.time()) % 100000000
     return token
 
-
 ##### Student ##########
 
 def start(update, context):
@@ -226,10 +224,7 @@ def setup(update, context):
     # check if student can register for this module!
     student_no = context.args[0]
     try:
-        global gc
-        global credentials
-        if credentials.access_token_expired:
-            gc.login()
+        refresh_gsp() #refresh api auth
         cell = wks1.find(student_no)  # Look in reflection sessions
         row_num = cell.row
         student_details = {
@@ -268,10 +263,7 @@ def attend(update, context):
                                     text="Token doesn't exist or has expired. Please contact your tutor.")
         return
     token_type = json.loads(redis_client.hget(TOKEN_MAP, token))['type']
-    global gc
-    global credentials
-    if credentials.access_token_expired:
-        gc.login()
+    refresh_gsp() #refresh api auth
     if token_type == "r":  # reflection session
         col_name_reflect = get_week_ref()
         # check if already attended for current week
@@ -302,7 +294,6 @@ def attend(update, context):
     elif token_type == "s":  # studio session
         # check if already attended for current week
         col_name_attend = get_week_stu()
-        col_name_comment = chr(ord(col_name_attend) + 1)
         row_name = json.loads(redis_client.hget(STUDENT_MAP, username))['row']  # (TODO) make sure the row number are same for each student in both
         # the different sheets
         val = wks2.acell(f'{col_name_attend}{row_name}').value
@@ -313,7 +304,7 @@ def attend(update, context):
         else:
             if not redis_client.hexists(TOKEN_MAP, token):  # Not active token
                 context.bot.send_message(chat_id=update.message.chat_id,
-                                         text="Token doesn't exist or has expired. Please contact your tutor.")
+                                         text="Token doesn't exist or has expired. Please contact your avenger.")
                 return
             curr_capacity = json.loads(redis_client.hget(TOKEN_MAP, token))['capacity']
             if curr_capacity == 0:
@@ -334,6 +325,15 @@ def attend(update, context):
                 redis_client.hset(TOKEN_MAP, token, json.dumps(token_map))  # reduce capacity
                 return
 
+def refresh_gsp():
+    """
+    Function to refresh Google Spreadsheet API token when it has expired. 
+    """
+    global gc
+    global credentials
+    if credentials.access_token_expired:
+        gc.login()
+        
 def help_func(update, context):
     """
     Function to generate help text.
@@ -348,9 +348,10 @@ def help_func(update, context):
                                   "For avengers/tutors: \n"
                                   "/start_session <number of students> to mark the attendance for your group of "
                                   "avengers.\n"
-                                  "/stop_session to stop your current running session."
+                                  "/stop_session to stop your current running session.\n"
+                                  "/comment to trigger a set of commands to give feedback to students\n"
                                   "For all: \n"
-                                  "/feedback <feedback> to give feedback or report bugs to the developers.\n")
+                                  "/bot_feedback <feedback> to give feedback or report bugs to the developers.\n")
 
 def change_username(update, context):  # (TODO) Review code for avenger vs student vs tutor reflection
     """
@@ -364,10 +365,7 @@ def change_username(update, context):  # (TODO) Review code for avenger vs stude
         username = get_user_id_or_username(update)
         student_no = context.args[0]
         try:
-            global gc
-            global credentials
-            if credentials.access_token_expired:
-                gc.login()
+            refresh_gsp() #refresh api auth
             cell = wks1.find(student_no)  # Look in reflection sessions
             row_num = cell.row
             student_details = {
@@ -395,10 +393,7 @@ def bot_feedback(update, context):
     else:
         name = update.message.from_user.first_name
         username = get_user_id_or_username(update)
-        global gc
-        global credentials
-        if credentials.access_token_expired:
-            gc.login()
+        refresh_gsp() #refresh api auth
         feedback_token = json.loads(redis_client.hget(TOKEN_MAP, "feedback"))
         row = feedback_token['capacity']
         wk3.update_acell("A" + row, name)
@@ -418,10 +413,7 @@ def attendance_reflection(update, context):
         context.bot.send_message(chat_id=update.message.chat_id, text="You've not registered yet. Please send /setup "
                                                                       "<Student Number> to register")
     else:  # iterate through columns of the row, checking for instances where the attendance is marked.
-        global gc
-        global credentials
-        if credentials.access_token_expired:
-            gc.login()
+        refresh_gsp() #refresh api auth
         row_num = json.loads(redis_client.hget(STUDENT_MAP, username))['row']
         weeks = []
         week_counter = 2
@@ -429,7 +421,7 @@ def attendance_reflection(update, context):
             col = chr(i)
             if wks1.acell(f'{col}{row_num}').value == '1':
                 weeks.append("Week " + str(week_counter))
-                week_counter += 1
+            week_counter += 1
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Our records indicate that you've so far attended reflection sessions for: "
                                       + print_arr(weeks) + ". Please contact a staff member if there is a discrepancy")
@@ -444,18 +436,15 @@ def attendance_studio(update, context):
         context.bot.send_message(chat_id=update.message.chat_id, text="You've not registered yet. Please send /setup "
                                                                       "<Student Number> to register")
     else:  # iterate through columns of the row, checking for instances where the attendance is marked.
-        global gc
-        global credentials
-        if credentials.access_token_expired:
-            gc.login()
+        refresh_gsp() #refresh api auth
         row_num = json.loads(redis_client.hget(STUDENT_MAP, username))['row']
         weeks = []
         week_counter = 2
         for i in range(67, 90, 2):
             col = chr(i)
             if wks2.acell(f'{col}{row_num}').value == '1':
-                weeks.append("Week " + str(week_counter))
-                week_counter += 1
+                weeks.append("Week " + str(week_counter)) # (TODO) fix counting error
+            week_counter += 1
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Our records indicate that you've so far attended studio sessions for: " +
                                       print_arr(weeks) + ". Please contact a staff member if there is a discrepancy")
@@ -563,7 +552,6 @@ def main():
 
     # Run the bot until you press Ctrl-C
     updater.idle()
-
 
 if __name__ == "__main__":
     main()
