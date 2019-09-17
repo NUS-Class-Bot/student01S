@@ -454,7 +454,20 @@ def comment(update, context):
     Function to comment on students who attended tutorial
     """
     username = get_user_id_or_username(update)
+    if not redis_client.hexists(AVENGER_MAP, username):
+        context.bot.send_message(chat_id=update.message.chat_id,
+                                 text="Sorry! You're not registered as an avenger and hence cannot use this command.")
+        return ConversationHandler.END
+    global gc
+    global credentials
+    if credentials.access_token_expired:
+        gc.login()
     token = redis_client.hget(AVENGER_MAP, username)
+    if token == "No":
+        context.bot.send_message(chat_id=update.message.chat_id,
+                                 text="Sorry! Seems like no previous session is registered for you to comment on.")
+        return ConversationHandler.END
+
     students = json.loads(redis_client.hget(TOKEN_MAP, token))['students']
     if len(students) == 0:
         context.bot.send_message(chat_id=update.message.chat_id,
@@ -504,22 +517,31 @@ def print_arr(arr):
         runner += item + " "
     return runner
 
-
-def main():
-    """Start the bot"""
-    # Create an event handler, # (TODO) hide key
-    updater = Updater('os.environ.get("TELEKEY")', use_context=True)
-
+def init_data():
+    """
+    Setup initial data in the Redis database.
+    """
     # Setup module/admin staff in Redis database
     with open('people.json') as people_json:
         data = json.load(people_json)
         for staff_member in data['staff']:
-            redis_client.hset(TUTOR_MAP, staff_member, "No")
+            if not redis_client.hexists(TUTOR_MAP, staff_member):
+                redis_client.hset(TUTOR_MAP, staff_member, "No")
         for admin_member in data['admin']:
-            redis_client.hset(TUTOR_MAP, admin_member, "No")
+            if not redis_client.hexists(TUTOR_MAP, admin_member):
+                redis_client.hset(TUTOR_MAP, admin_member, "No")
         for avenger in data['avenger']:
-            redis_client.hset(AVENGER_MAP, avenger, "No")
+            if not redis_client.hexists(AVENGER_MAP, avenger):
+                redis_client.hset(AVENGER_MAP, avenger, "No")
         redis_client.hset(AVENGER_MAP, "raivatshah", "No")  # for testing.
+
+def main():
+    """Start the bot"""
+    # Create an event handler, # (TODO) hide key
+    updater = Updater('***REMOVED***', use_context=True)
+
+    # Setup data in the Redis database
+    init_data()
 
     # Get dispatcher to register handlers
     dp = updater.dispatcher
