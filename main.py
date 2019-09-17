@@ -458,10 +458,7 @@ def comment(update, context):
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Sorry! You're not registered as an avenger and hence cannot use this command.")
         return ConversationHandler.END
-    global gc
-    global credentials
-    if credentials.access_token_expired:
-        gc.login()
+    refresh_gsp()
     token = redis_client.hget(AVENGER_MAP, username)
     if token == "No":
         context.bot.send_message(chat_id=update.message.chat_id,
@@ -538,7 +535,7 @@ def init_data():
 def main():
     """Start the bot"""
     # Create an event handler, # (TODO) hide key
-    updater = Updater('***REMOVED***', use_context=True)
+    updater = Updater('719416058:AAFos4GnAi1ufpWPCqKY3vc3iBmjAckWVLY', use_context=True)
 
     # Setup data in the Redis database
     init_data()
