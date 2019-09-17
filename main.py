@@ -1,8 +1,8 @@
-""" 
-CS1101S Attendance Bot 
+"""
+CS1101S Attendance Bot
 
 Current Version Developed by Chaitanya Baranwal and Raivat Shah
-Project founded by Advay Pal, Chaitanya Baranwal and Raivat Shah. 
+Project founded by Advay Pal, Chaitanya Baranwal and Raivat Shah.
 
 Project supervised by A/P Martin Henz and Visiting Professor Tobias Wrigstad
 
@@ -206,7 +206,7 @@ def start(update, context):
 def setup(update, context):
     """
     Function to setup the username of student user and
-    store it in the key-value database. 
+    store it in the key-value database.
     """
     # check if no args
     if len(context.args) == 0:
@@ -327,13 +327,13 @@ def attend(update, context):
 
 def refresh_gsp():
     """
-    Function to refresh Google Spreadsheet API token when it has expired. 
+    Function to refresh Google Spreadsheet API token when it has expired.
     """
     global gc
     global credentials
     if credentials.access_token_expired:
         gc.login()
-        
+
 def help_func(update, context):
     """
     Function to generate help text.
@@ -469,7 +469,7 @@ def comment(update, context):
     if len(students) == 0:
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="No students have signed up yet!")
-        return ConversationHandler.END    
+        return ConversationHandler.END
     reply_keyboard = [[i] for i in students]
     context.bot.send_message(chat_id=update.message.chat_id,
                              text="Select a student from the list below. Type /cancel to cancel the process.",
@@ -507,7 +507,7 @@ def cancel(update, context):
 
 def print_arr(arr):
     """
-    Function to get the string version of an array in one line. 
+    Function to get the string version of an array in one line.
     """
     runner = ""
     for item in arr:
@@ -535,7 +535,7 @@ def init_data():
 def main():
     """Start the bot"""
     # Create an event handler, # (TODO) hide key
-    updater = Updater('***REMOVED***', use_context=True)
+    updater = Updater(os.environ.get('TELEKEY'), use_context=True)
 
     # Setup data in the Redis database
     init_data()
