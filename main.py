@@ -453,6 +453,11 @@ def comment(update, context):
     Function to comment on students who attended tutorial
     """
     username = get_user_id_or_username(update)
+    if not redis_client.hexists(AVENGER_MAP, username):
+        context.bot.send_message(chat_id=update.message.chat_id,
+                                 text="Sorry! You're not registered as an avenger and hence cannot use this command.")
+        return ConversationHandler.END
+    refresh_gsp()
     token = redis_client.hget(AVENGER_MAP, username)
     students = json.loads(redis_client.hget(TOKEN_MAP, token))['students']
     if len(students) == 0:
@@ -525,7 +530,7 @@ def main():
     """Start the bot"""
     # Create an event handler, # (TODO) hide key
     updater = Updater(os.environ.get('TELEKEY'), use_context=True)
-
+  
     # Setup data in the Redis database
     init_data()
 
