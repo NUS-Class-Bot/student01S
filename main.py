@@ -1,8 +1,8 @@
-""" 
-CS1101S Attendance Bot 
+"""
+CS1101S Attendance Bot
 
 Current Version Developed by Chaitanya Baranwal and Raivat Shah
-Project founded by Advay Pal, Chaitanya Baranwal and Raivat Shah. 
+Project founded by Advay Pal, Chaitanya Baranwal and Raivat Shah.
 
 Project supervised by A/P Martin Henz and Visiting Professor Tobias Wrigstad
 
@@ -206,7 +206,7 @@ def start(update, context):
 def setup(update, context):
     """
     Function to setup the username of student user and
-    store it in the key-value database. 
+    store it in the key-value database.
     """
     # check if no args
     if len(context.args) == 0:
@@ -327,13 +327,12 @@ def attend(update, context):
 
 def refresh_gsp():
     """
-    Function to refresh Google Spreadsheet API token when it has expired. 
+    Function to refresh Google Spreadsheet API token when it has expired.
     """
     global gc
     global credentials
     if credentials.access_token_expired:
         gc.login()
-        
 def help_func(update, context):
     """
     Function to generate help text.
@@ -497,29 +496,38 @@ def cancel(update, context):
 
 def print_arr(arr):
     """
-    Function to get the string version of an array in one line. 
+    Function to get the string version of an array in one line.
     """
     runner = ""
     for item in arr:
         runner += item + " "
     return runner
 
-
-def main():
-    """Start the bot"""
-    # Create an event handler, # (TODO) hide key
-    updater = Updater('os.environ.get("TELEKEY")', use_context=True)
-
+def init_data():
+    """
+    Setup initial data in the Redis database.
+    """
     # Setup module/admin staff in Redis database
     with open('people.json') as people_json:
         data = json.load(people_json)
         for staff_member in data['staff']:
-            redis_client.hset(TUTOR_MAP, staff_member, "No")
+            if not redis_client.hexists(TUTOR_MAP, staff_member):
+                redis_client.hset(TUTOR_MAP, staff_member, "No")
         for admin_member in data['admin']:
-            redis_client.hset(TUTOR_MAP, admin_member, "No")
+            if not redis_client.hexists(TUTOR_MAP, admin_member):
+                redis_client.hset(TUTOR_MAP, admin_member, "No")
         for avenger in data['avenger']:
-            redis_client.hset(AVENGER_MAP, avenger, "No")
+            if not redis_client.hexists(AVENGER_MAP, avenger):
+                redis_client.hset(AVENGER_MAP, avenger, "No")
         redis_client.hset(AVENGER_MAP, "raivatshah", "No")  # for testing.
+
+def main():
+    """Start the bot"""
+    # Create an event handler, # (TODO) hide key
+    updater = Updater(os.environ.get('TELEKEY'), use_context=True)
+
+    # Setup data in the Redis database
+    init_data()
 
     # Get dispatcher to register handlers
     dp = updater.dispatcher
