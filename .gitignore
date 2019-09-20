@@ -1,2 +1,6 @@
 venv/
 .idea/
+.vscode/
+.DS_Store
+people.json
+CS110S*.json
