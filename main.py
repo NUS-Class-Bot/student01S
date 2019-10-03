@@ -333,6 +333,7 @@ def refresh_gsp():
     global credentials
     if credentials.access_token_expired:
         gc.login()
+
 def help_func(update, context):
     """
     Function to generate help text.
