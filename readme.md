@@ -10,8 +10,6 @@ Co-Founders: [Advay Pal](https://github.com/advaypal), [Chaitanya Baranwal](http
 
 ## The Problem
 
-![meme](meme.png)
-
 Currently, the attendance taking process in NUS is the same old concept from the 1980s: either pass a sheet around for sign or do a roll-call of names. However, both these problems are prone to cheating by students as it is to be a *proxy* for someone. Furthermore, it is also a hassle for instructors to *transfer* the data from a physical sheet to a computer based record for further marking. Both the above methods also consume about 5 minutes of precious class time for each tutorial session. 
 
 Since at the School of Computing, attendance taking and participation in tutorial comprise of a significant part of learning and assessment, we thought of building a cool solution to this problem. 
