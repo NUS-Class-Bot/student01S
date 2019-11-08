@@ -59,3 +59,6 @@ designed especially for the module CS1101S.
 
 ## Problems & Solutions
 
+1. **Potential data losses:** The current data storage mechanism uses Redis, and even though this is persistent, it is not completely safe from any potential data losses (nothing is), be it human or system error. Keeping regular backups of the attendance data is something we are looking towards in the future.
+   
+2. **Dedicated front-end for data management:** Right now tutor data is handled through a `.json` file, and attendance data is handled through Google Sheets. Developing a dedicated front-end for this, where tutors can go in to update attendance, and module staff can go in to update tutors would solve several workflow issues in the Telegram bot.
