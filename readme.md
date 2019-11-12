@@ -1,22 +1,19 @@
 # NUS Class Bot - NUS CP3108B Project
 
-Project Supervisor: A/P [Martin Henz](https://github.com/martin-henz)
+Project Supervisor: A/P [Martin Henz](https://github.com/martin-henz). Project Advisor: [Tobias Wrigstad](https://github.com/TobiasWrigstad)
 
-Advisor: [Tobias Wrigstad](https://github.com/TobiasWrigstad)
-
-Current Student Developers: [Chaitanya Baranwal](https://github.com/chaitanyabaranwal) and [Raivat Shah](https://github.com/raivatshah) 
-
-Co-Founders: [Advay Pal](https://github.com/advaypal), [Chaitanya Baranwal](https://github.com/chaitanyabaranwal) and [Raivat Shah](https://github.com/raivatshah) 
+Student Developers: [Chaitanya Baranwal](https://github.com/chaitanyabaranwal) and [Raivat Shah](https://github.com/raivatshah). Co-Founders: [Advay Pal](https://github.com/advaypal), [Chaitanya Baranwal](https://github.com/chaitanyabaranwal) and [Raivat Shah](https://github.com/raivatshah)
 
 ## The Problem
 
-Currently, the attendance taking process in NUS is the same old concept from the 1980s: either pass a sheet around for sign or do a roll-call of names. However, both these problems are prone to cheating by students as it is easy to be a *proxy* for someone. Furthermore, it is also a hassle for instructors to *transfer* the data from a physical sheet to a computer based record for further marking. Both the above methods also consume about 5 minutes of precious class time for each tutorial session. Usually, an NUS class has 10 tutorials per semester and this leads to a waste of 5 x 10 = 50 minutes each semester of students and teaching assistants. 
-
-Since attendance and participation are important for learning and assessment at SoC, we thought of building a cool solution to this problem. 
+Currently, the attendance taking process in NUS is the same old concept from the 1980s: either pass a sheet around for sign or do a roll-call of names. However, both these problems are prone to cheating by students as it is easy to be a *proxy* for someone. Furthermore, it is also a hassle for instructors to *transfer* the data from a physical sheet to a computer based record for further marking. Both the above methods also consume about 5 minutes of precious class time for each tutorial session. Usually, an NUS class has 10 tutorials per semester and this leads to a waste of 5 x 10 = 50 minutes each semester of students and teaching assistants. Since attendance and participation are important for learning and assessment at SoC, we thought of building a cool solution to this problem. 
 
 ## The Solution 
 
-NUS Class Bot is a [Telegram](https://telegram.org/) Bot to solve the above mentioned problem. The bot stores the attendance data collected in real-time on a Google Spreadsheet, pre-setup during deployment that is shared with module staff.
+NUS Class Bot is a [Telegram](https://telegram.org/) Bot to solve the above mentioned problem. The bot stores the attendance data collected in real-time on a Google Spreadsheet, which is setup during deployment and shared with module staff. The solution connects three different services: Telegram, Python and Google Spreadsheets to collect the attendance data. The solution uses redis to stores multiple mappings to match a Telegram user with a row on Google Spreadsheets. The solution is currently deployed Amazon Web Services (AWS). The connection is illustrated in the following diagram:
+
+![diagram](diagram.png)
+
 
 The bot on this repository has been specifically designed for use with [CS1101S](https://comp.nus.edu.sg/~cs1101s/), an expertial introductory programming module for CS Freshman at NUS-SoC. Here's a basic work-flow:
 
@@ -26,6 +23,8 @@ The bot on this repository has been specifically designed for use with [CS1101S]
 3. `Tutor` shares the `Token` with the students present in the classroom by writing it on a white board.
 4. `Students` mark attendance using `/attend` (`Token`). If the classroom is already *full* (number of students indicated in step 2 is reached), or if the `Token` is incorrect, the attendance is not marked and the `Student` is informed of the same. If there's a problem, the `Student` can approach the `Tutor`, who can immediately check on the `Google Sheet`.
 5. `Tutor` finishes the process by sending `/stop_session` to the bot.
+
+*Optional: The tutor can also choose to comment on a student's performance in a particular session using `/comment`*
 
 Here's a comprehensive summary of all the command supported by the bot and their function:
 
@@ -40,10 +39,8 @@ Here's a comprehensive summary of all the command supported by the bot and their
 | `/comment`        | `Tutor`           | To trigger a set of commands to give feedback on a student's performance in a particular session.  |
 | `/comment`        | `Tutor`           | To trigger a set of commands to give feedback on a student's performance in a particular session.  |
 
+The bot is currently used by the staff of CS1101S for tutorials, reflection sessions and staff meetings. Thus, the bot currently has approximately 600+ active users. 
 
-
-The bot is currently used by the staff of CS1101S for tutorials, reflection sessions and staff meetings. Thus, the bot currently has approximately 600 active users. 
- 
 ## Development Process 
 
 The development process for the bot can effectively be divided into the following phases: ideation, prototyping, testing and final development. Ideation consisted of formulating the system design for the bot, following which a minimum viable product (prototype) was developed. The prototype was tested in some tutorials before using it over a wide scale. The success of the bot in those particular tutorial classes motivated us to scale it up, which consisted of developing a Telegram Bot
@@ -55,7 +52,7 @@ designed especially for the module CS1101S.
 
 3. **Testing Phase:** After setting up the basic skeleton for the bot, we decided to test it unofficially during some tutorials. This was mainly to gain user feedback, understand the various test cases and discover unnoticed bugs. Advay tested the bot during his tutorial, and we also conducted "mock" tutorial sessions at our residential college. We discovered important bugs during this phase, such as the absence of a Telegram useraname for the student and also workflow errors. The testing phase greatly helped us in making the bot more polished and user-friendly.
 
-4. **Final development and scaling up the solution:** The final phase of implementing the bot involved making changes to the bot to adhere to CS1101S's needs and workflows, as well as onboarding the huge freshman/tutor base onto the bot. Changes involved dedicating the bot to populate only certain spreadsheets, reading tutor data from JSON files, as well as deciding which week to populate attendance for based on a JSON file which charts out the different weeks in the academic year. The `comment` feature was included in the bot as a liast minute addition, so tutors of CS1101S can comment their students on the Studio sessions. The `feedback` method to garner user feedback for the bot was also implemented during this phase. This phase is still ongoing, and we provide constant support to the tutors/students who face problems using the bot.
+4. **Final development and scaling up the solution:** The final phase of implementing the bot involved making changes to the bot to adhere to CS1101S's needs and workflows, as well as onboarding the huge freshman/tutor base onto the bot. Changes involved dedicating the bot to populate only certain spreadsheets, reading tutor data from JSON files, as well as deciding which week to populate attendance for based on a JSON file which charts out the different weeks in the academic year. The `comment` feature was included in the bot so tutors of CS1101S can comment their students on the Studio sessions. The `feedback` method to garner user feedback for the bot was also implemented during this phase. The `attendance_studio` and `attendance_reflection` features were implemented to allow students to check their own attendance records for studio and reflection sessions, respectively. This was necessary as the students cannot be given access to the entire Google Spreadsheet because of PDPA concerns. This phase is still ongoing, and we provide constant support to the tutors/students who face problems using the bot.
 
 ## Problems & Solutions
 
