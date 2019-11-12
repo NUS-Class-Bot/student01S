@@ -10,9 +10,9 @@ Co-Founders: [Advay Pal](https://github.com/advaypal), [Chaitanya Baranwal](http
 
 ## The Problem
 
-Currently, the attendance taking process in NUS is the same old concept from the 1980s: either pass a sheet around for sign or do a roll-call of names. However, both these problems are prone to cheating by students as it is to be a *proxy* for someone. Furthermore, it is also a hassle for instructors to *transfer* the data from a physical sheet to a computer based record for further marking. Both the above methods also consume about 5 minutes of precious class time for each tutorial session. 
+Currently, the attendance taking process in NUS is the same old concept from the 1980s: either pass a sheet around for sign or do a roll-call of names. However, both these problems are prone to cheating by students as it is easy to be a *proxy* for someone. Furthermore, it is also a hassle for instructors to *transfer* the data from a physical sheet to a computer based record for further marking. Both the above methods also consume about 5 minutes of precious class time for each tutorial session. Usually, an NUS class has 10 tutorials per semester and this leads to a waste of 5 x 10 = 50 minutes each semester of students and teaching assistants. 
 
-Since at the School of Computing, attendance taking and participation in tutorial comprise of a significant part of learning and assessment, we thought of building a cool solution to this problem. 
+Since attendance and participation are important for learning and assessment at SoC, we thought of building a cool solution to this problem. 
 
 ## The Solution 
 
@@ -59,3 +59,6 @@ designed especially for the module CS1101S.
 
 ## Problems & Solutions
 
+1. **Potential data losses:** The current data storage mechanism uses Redis, and even though this is persistent, it is not completely safe from any potential data losses (nothing is), be it human or system error. Keeping regular backups of the attendance data is something we are looking towards in the future.
+   
+2. **Dedicated front-end for data management:** Right now tutor data is handled through a `.json` file, and attendance data is handled through Google Sheets. Developing a dedicated front-end for this, where tutors can go in to update attendance, and module staff can go in to update tutors would solve several workflow issues in the Telegram bot.
