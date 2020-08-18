@@ -1,6 +1,7 @@
-venv/
+env/
 .idea/
 .vscode/
 .DS_Store
 people.json
 CS1101S Bot-99365efd2073.json
+attendance-bot-2020-21-44c478c22a71.json
