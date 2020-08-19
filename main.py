@@ -34,7 +34,7 @@ def get_week_ref():
             print("end" + str(end))
             if start <= date <= end:
                 return data[month][date_range]
-    return 'B'
+    return 'Z'
 
 
 # Enable logging
