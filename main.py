@@ -21,7 +21,6 @@ import time
 
 def get_week_ref():
     cur_time = time.asctime()
-    print(cur_time)
     li = cur_time.split()
     month = li[1]
     date = int(li[2])  # convert to integer for comparison later
@@ -29,9 +28,7 @@ def get_week_ref():
         data = json.load(acad_calendar)
         for date_range in data[month].keys():
             start = int(date_range.split('-')[0])
-            print("start" + str(start))
             end = int(date_range.split('-')[1])
-            print("end" + str(end))
             if start <= date <= end:
                 return data[month][date_range]
     return 'Z'
