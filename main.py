@@ -79,10 +79,11 @@ def start_session(update, context):
     """
     # Store tutor usernames
     username = get_user_id_or_username(update)
+    print("current username is " + username)
     if not (redis_client.hexists(TUTOR_MAP, username)):
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Sorry! You're not registered as a staff member and hence cannot use this command")
-        return
+        return 
     if len(context.args) == 0:
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Insufficient number of arguments. Please enter number of students along with "
@@ -326,7 +327,7 @@ def attendance_reflection(update, context):
         week_counter = 2
         for i in range(66, 78):
             col = chr(i)
-            if wks1.acell(f'{col}{row_num}').value == '1':
+            if wks1.acell(f'{col}{row_num}').value == 'TRUE':
                 weeks.append("Week " + str(week_counter))
             week_counter += 1
         context.bot.send_message(chat_id=update.message.chat_id,
@@ -359,10 +360,13 @@ def init_data():
         data = json.load(people_json)
         for staff_member in data['staff']:
             if not redis_client.hexists(TUTOR_MAP, staff_member):
+                print('added ' + staff_member + ' to tutor map')
                 redis_client.hset(TUTOR_MAP, staff_member, "No")
         for admin_member in data['admin']:
             if not redis_client.hexists(TUTOR_MAP, admin_member):
                 redis_client.hset(TUTOR_MAP, admin_member, "No")
+
+    
 
 
 def main():
