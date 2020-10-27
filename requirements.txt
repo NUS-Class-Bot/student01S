@@ -5,7 +5,7 @@ cachetools==3.1.0
 certifi==2018.11.29
 cffi==1.12.1
 chardet==3.0.4
-cryptography==2.5
+cryptography==3.2
 earthengine-api==0.1.180
 EasyProcess==0.2.7
 future==0.17.1
