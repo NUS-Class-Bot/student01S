@@ -216,7 +216,8 @@ def attend(update, context):
         return
     # decide reflection or studio
     token = context.args[0]
-    if not redis_client.hexists(TOKEN_MAP, token):  # Not active token
+    token_status = json.loads(redis_client.hget(TOKEN_MAP, token))['active']
+    if not redis_client.hexists(TOKEN_MAP, token) or not token_status:  # Not active token
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="Token doesn't exist or has expired. Please contact your tutor.")
         return
