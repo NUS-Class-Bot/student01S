@@ -54,7 +54,7 @@ TOKEN_MAP = "TOKEN_MAP"
 scope = ['https://spreadsheets.google.com/feeds',
          'https://www.googleapis.com/auth/drive']
 credentials = ServiceAccountCredentials.from_json_keyfile_name(
-    'attendance-bot-2020-21-44c478c22a71.json', scope)
+    'attend.json', scope)
 gc = gspread.authorize(credentials)
 wks1 = gc.open("Reflection Attendance AY 20/21 Sem 1").sheet1  # For Reflection
 
