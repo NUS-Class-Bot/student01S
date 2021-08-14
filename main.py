@@ -44,7 +44,7 @@ redis_client = redis.StrictRedis(
 # Dictionaries storing the various mappings for the Telegram bot
 # Maps student's telegram @username to row num and username
 STUDENT_MAP = "STUDENT_MAP"
-TUTOR_MAP = "TUTOR_MAP"  # Maps @username of staff to state ("no"/token)
+TUTOR_MAP = "TUTOR_MAP"  # Maps @username of staff to token (collection of token number and whether it is active)
 # Maps the set of active tokens to a capacity, type, status and current students
 TOKEN_MAP = "TOKEN_MAP"
 
@@ -99,21 +99,27 @@ def start_session(update, context):
     token = generate_hash()
 
     # Return error message if a session is already running
-    if redis_client.hget(TUTOR_MAP, username) != "No":
+    tutor_token = json.loads(redis_client.hget(TUTOR_MAP, username))
+    if tutor_token['active']:
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="A session is already running. Please use /stop_session to stop it")
         return
 
     # Delete previously existing token for tutor
-    redis_client.hdel(TOKEN_MAP, redis_client.hget(TUTOR_MAP, username))
+    redis_client.hdel(TOKEN_MAP, tutor_token['token'])
     
     # Make tutor active. Store string value of token as value
-    redis_client.hset(TUTOR_MAP, username, token)
+    tutor_token = {
+        'token': token,
+        'active': True,
+    }
+    redis_client.hset(TUTOR_MAP, username, json.dumps(tutor_token))
+
+    # Activate Token and store capacity
     token_data = {
         'capacity': int(context.args[0]),
         'active': True,
     }
-    # Activate Token and store capacity
     redis_client.hset(TOKEN_MAP, token, json.dumps(token_data))
 
     context.bot.send_message(chat_id=update.message.chat_id, text=f'You have successfully started a Reflection '
@@ -135,20 +141,22 @@ def stop_session(update, context):
         return
     
     # Get the existing token for tutor
-    token = redis_client.hget(TUTOR_MAP, username)
+    tutor_token = json.loads(redis_client.hget(TUTOR_MAP, username))
 
     # If no token exists means no attendance session exists
-    if (token == "No") or (not json.loads(redis_client.hget(TOKEN_MAP, token))['active']):
+    if not tutor_token['active']:
         context.bot.send_message(chat_id=update.message.chat_id,
                                  text="You've not started a session yet. Please send /start_session to start a session")
         return
     
-    # Delete token for tutor
-    redis_client.hset(TUTOR_MAP, username, "No")
+    # Make token inactive for tutor
+    tutor_token['active'] = False
+    redis_client.hset(TUTOR_MAP, username, json.dumps(tutor_token))
     context.bot.send_message(chat_id=update.message.chat_id,
                              text="Your Reflection Session has successfully stopped. Thanks!")
 
     # Set token to inactive
+    token = tutor_token['token']
     token_in_token_map = json.loads(redis_client.hget(TOKEN_MAP, token))
     token_in_token_map['active'] = False
     redis_client.hset(TOKEN_MAP, token, json.dumps(token_in_token_map))
@@ -381,17 +389,22 @@ def init_data():
     """
     Setup initial data in the Redis database.
     """
+    # Initial token data for tutors and staff
+    tutor_token = json.dumps({
+        'token': 'No',
+        'active': False
+    })
+
     # Setup module/admin staff in Redis database
     with open('people.json') as people_json:
         data = json.load(people_json)
         for staff_member in data['staff']:
             if not redis_client.hexists(TUTOR_MAP, staff_member):
                 print('added ' + staff_member + ' to tutor map')
-                redis_client.hset(TUTOR_MAP, staff_member, "No")
+                redis_client.hset(TUTOR_MAP, staff_member, tutor_token)
         for admin_member in data['admin']:
             if not redis_client.hexists(TUTOR_MAP, admin_member):
-                redis_client.hset(TUTOR_MAP, admin_member, "No")
-
+                redis_client.hset(TUTOR_MAP, admin_member, tutor_token)
 
 def main():
     """Start the bot"""
