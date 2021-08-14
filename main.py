@@ -105,9 +105,7 @@ def start_session(update, context):
     redis_client.hset(TUTOR_MAP, username, token)
     token_data = {
         'capacity': int(context.args[0]),
-        'type': 'r',
         'active': True,
-        'students': []
     }
     # Activate Token and store capacity
     redis_client.hset(TOKEN_MAP, token, json.dumps(token_data))
