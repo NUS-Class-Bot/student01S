@@ -418,15 +418,14 @@ def main():
     dp = updater.dispatcher
 
     # Register different commands
-    dp.add_handler(CommandHandler('start', start))
-    dp.add_handler(CommandHandler('setup', setup))
+    dp.add_handler(CommandHandler('start', start, run_async=True))
+    dp.add_handler(CommandHandler('setup', setup, run_async=True))
     dp.add_handler(CommandHandler('attend', attend))
-    dp.add_handler(CommandHandler('start_session', start_session))
-    dp.add_handler(CommandHandler('stop_session', stop_session))
-    dp.add_handler(CommandHandler('change_username', change_username))
-    dp.add_handler(CommandHandler('help', help_func))
-    dp.add_handler(CommandHandler(
-        'attendance_reflection', attendance_reflection))
+    dp.add_handler(CommandHandler('start_session', start_session, run_async=True))
+    dp.add_handler(CommandHandler('stop_session', stop_session, run_async=True))
+    dp.add_handler(CommandHandler('change_username', change_username, run_async=True))
+    dp.add_handler(CommandHandler('help', help_func, run_async=True))
+    dp.add_handler(CommandHandler('attendance_reflection', attendance_reflection, run_async=True))
 
     # Start the bot
     updater.start_polling()
