@@ -202,6 +202,11 @@ def setup(update, context):
     try:
         refresh_gsp()  # refresh api auth
         cell = wks1.find(student_no)  # Look in reflection sessions
+        if not cell:
+            update.message.reply_text("Sorry! Your student number is not registered "
+                                      "for this module. Please contact a staff "
+                                      "member.")
+            return
         row_num = cell.row
         student_details = {
             'row': row_num,
@@ -326,6 +331,11 @@ def change_username(update, context):
         refresh_gsp()  # refresh api auth
         # Find row number in reflection session sheet
         cell = wks1.find(student_no)
+        if not cell:
+            update.message.reply_text("Sorry! Your student number is not registered "
+                                      "for this module. Please contact a staff "
+                                      "member.")
+            return
         row_num = cell.row
         student_details = {
             'row': row_num,
