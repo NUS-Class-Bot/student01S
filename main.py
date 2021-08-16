@@ -239,8 +239,8 @@ def attend(update, context):
     token = context.args[0]
 
     # Check if token is active
-    token_status = json.loads(redis_client.hget(TOKEN_MAP, token))['active']
-    if not redis_client.hexists(TOKEN_MAP, token) or not token_status:
+    token_data = json.loads(redis_client.hget(TOKEN_MAP, token))
+    if not redis_client.hexists(TOKEN_MAP, token) or not token_data['active']:
         update.message.reply_text("Token doesn't exist or has expired. Please contact your tutor.")
         return
 
