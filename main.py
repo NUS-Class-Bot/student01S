@@ -54,7 +54,10 @@ scope = ['https://spreadsheets.google.com/feeds',
 credentials = ServiceAccountCredentials.from_json_keyfile_name(
     'attend.json', scope)
 gc = gspread.authorize(credentials)
-wks1 = gc.open("Reflection Attendance AY 20/21 Sem 1").sheet1  # For Reflection
+try:
+    wks1 = gc.open("CS1101S Reflection Attendance AY 21/22 Sem 1").sheet1  # For Reflection
+except gspread.exceptions.GSpreadException:
+    print('Error in opening the sheet!')
 
 # Helper functions to get username and user ID
 # Currently we are checking tutor existence through usernames since we have easy access to them,
@@ -211,6 +214,8 @@ def setup(update, context):
     except gspread.exceptions.CellNotFound:
         update.message.reply_text("Sorry! Your student number is not registered "
                                   "for this module. Please contact a staff member.")
+    except:
+        update.message.reply_text("There was some issue in registration, please try again.")
 
 def attend(update, context):
     """
@@ -247,7 +252,11 @@ def attend(update, context):
     row_name = json.loads(redis_client.hget(STUDENT_MAP, username))['row']
 
     # check if attendance already marked
-    val = wks1.acell(f'{col_name_reflect}{row_name}').value
+    try:
+        val = wks1.acell(f'{col_name_reflect}{row_name}').value
+    except:
+        update.message.reply_text("There was some issue in marking attendance, please try again.")
+        return
     if val == "TRUE":
         update.message.reply_text("Your attendance for this week has already been "
                                   "marked. Thanks!")
@@ -261,7 +270,11 @@ def attend(update, context):
         return
     else:
         # update attendance
-        wks1.update_acell(f'{col_name_reflect}{row_name}', 'TRUE')
+        try:
+            wks1.update_acell(f'{col_name_reflect}{row_name}', 'TRUE')
+        except:
+            update.message.reply_text("There was some issue in marking attendance, please try again.")
+            return
         update.message.reply_text("Your attendance for this week has been successfully marked. Thanks!")
 
         # decrease token capacity        
@@ -324,6 +337,8 @@ def change_username(update, context):
         update.message.reply_text("Sorry! Your student number is not registered "
                                   "for this module. Please contact a staff "
                                   "member.")
+    except:
+        update.message.reply_text("There was some issue in registration, please try again.")
 
 
 def attendance_reflection(update, context):
@@ -346,8 +361,11 @@ def attendance_reflection(update, context):
     week_counter = 2
     for i in range(66, 78):
         col = chr(i)
-        if wks1.acell(f'{col}{row_num}').value == 'TRUE':
-            weeks.append("Week " + str(week_counter))
+        try:
+            if wks1.acell(f'{col}{row_num}').value == 'TRUE':
+                weeks.append("Week " + str(week_counter))
+        except:
+            update.message.reply_text("There was some issue in checking attendance, please try again.")
         week_counter += 1
     update.message.reply_text(f"Our records indicate that you've so far attended reflection sessions for: {print_arr(weeks)}." 
                               "Please contact a staff member if there is a discrepancy")
@@ -356,10 +374,7 @@ def print_arr(arr):
     """
     Function to get the string version of an array in one line.
     """
-    runner = ""
-    for item in arr:
-        runner += item + " "
-    return runner
+    return " ".join(arr)
 
 
 def init_data():
