@@ -239,8 +239,11 @@ def attend(update, context):
     token = context.args[0]
 
     # Check if token is active
+    if not redis_client.hexists(TOKEN_MAP, token):
+        update.message.reply_text("Token doesn't exist or has expired. Please contact your tutor.")
+        return
     token_data = json.loads(redis_client.hget(TOKEN_MAP, token))
-    if not redis_client.hexists(TOKEN_MAP, token) or not token_data['active']:
+    if not token_data['active']:
         update.message.reply_text("Token doesn't exist or has expired. Please contact your tutor.")
         return
 
@@ -263,7 +266,7 @@ def attend(update, context):
         return
     
     # Check if token has maxed out its capacity
-    curr_capacity = json.loads(redis_client.hget(TOKEN_MAP, token))['capacity']
+    curr_capacity = token_data['capacity']
     if curr_capacity == 0:
         update.message.reply_text("Cannot take attendance. Your class is full. Please contact tutor as "
                                   "someone may be trying to get undue points for attendance")
@@ -278,9 +281,8 @@ def attend(update, context):
         update.message.reply_text("Your attendance for this week has been successfully marked. Thanks!")
 
         # decrease token capacity        
-        token_map = json.loads(redis_client.hget(TOKEN_MAP, token))
-        token_map['capacity'] -= 1
-        redis_client.hset(TOKEN_MAP, token, json.dumps(token_map))  # reduce capacity
+        token_data['capacity'] -= 1
+        redis_client.hset(TOKEN_MAP, token, json.dumps(token_data))  # reduce capacity
         return
 
 
