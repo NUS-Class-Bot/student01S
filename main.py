@@ -56,10 +56,6 @@ credentials = ServiceAccountCredentials.from_json_keyfile_name(
 gc = gspread.authorize(credentials)
 wks1 = gc.open("Reflection Attendance AY 20/21 Sem 1").sheet1  # For Reflection
 
-# Helper message to reply with a certain text
-def reply_text(update, text):
-    update.message.reply_text(text)
-
 # Helper functions to get username and user ID
 # Currently we are checking tutor existence through usernames since we have easy access to them,
 # and user IDs for students. We can add a mechanism later to swap tutor usernames for user IDs in the `start_session` function.
@@ -216,6 +212,11 @@ def setup(update, context):
         update.message.reply_text("Sorry! Your student number is not registered "
                                   "for this module. Please contact a staff member.")
 
+# Helper function to update the attendance in the sheet
+def update_sheet_attendance(worksheet, row_name, col_name, update):
+    worksheet.update_acell(f'{col_name}{row_name}', 'TRUE')
+    update.message.reply_text("Your attendance for this week has been successfully marked. Thanks!")
+
 def attend(update, context):
     """
     Function to mark attendance of bot user.
@@ -265,8 +266,10 @@ def attend(update, context):
         return
     else:
         # update attendance
-        wks1.update_acell(f'{col_name_reflect}{row_name}', 'TRUE')
-        update.message.reply_text("Your attendance for this week has been successfully marked. Thanks!")
+        # We use context.dispatcher.run_async() here because the sheet update can be done asynchronously
+        context.dispatcher.run_async(update_sheet_attendance, wks1, col_name_reflect, row_name, update, update=update)
+
+        # decrease token capacity        
         token_map = json.loads(redis_client.hget(TOKEN_MAP, token))
         token_map['capacity'] -= 1
         redis_client.hset(TOKEN_MAP, token, json.dumps(token_map))  # reduce capacity
