@@ -213,7 +213,7 @@ def setup(update, context):
                                   "for this module. Please contact a staff member.")
 
 # Helper function to update the attendance in the sheet
-def update_sheet_attendance(worksheet, row_name, col_name, update):
+def update_sheet_attendance(worksheet, col_name, row_name, update):
     worksheet.update_acell(f'{col_name}{row_name}', 'TRUE')
     update.message.reply_text("Your attendance for this week has been successfully marked. Thanks!")
 
