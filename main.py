@@ -56,6 +56,10 @@ credentials = ServiceAccountCredentials.from_json_keyfile_name(
 gc = gspread.authorize(credentials)
 wks1 = gc.open("Reflection Attendance AY 20/21 Sem 1").sheet1  # For Reflection
 
+# Helper message to reply with a certain text
+def reply_text(update, text):
+    update.message.reply_text(text)
+
 # Helper functions to get username and user ID
 # Currently we are checking tutor existence through usernames since we have easy access to them,
 # and user IDs for students. We can add a mechanism later to swap tutor usernames for user IDs in the `start_session` function.
@@ -78,21 +82,18 @@ def start_session(update, context):
 
     # Check whether username is for a valid tutor
     if not (redis_client.hexists(TUTOR_MAP, username)):
-        context.bot.send_message(chat_id=update.message.chat_id,
-                                 text="Sorry! You're not registered as a staff member and hence cannot use this command")
+        update.message.reply_text("Sorry! You're not registered as a staff member and hence cannot use this command")
         return 
 
     # Check whether attendance capacity is supplied
     if len(context.args) == 0:
-        context.bot.send_message(chat_id=update.message.chat_id,
-                                 text="Insufficient number of arguments. Please enter number of students along with "
-                                      "the /start_session command")
+        update.message.reply_text("Insufficient number of arguments. Please enter number of students along with "
+                                  "the /start_session command")
         return
 
     # Check whether the capacity is positive
     if int(context.args[0]) <= 0:
-        context.bot.send_message(chat_id=update.message.chat_id,
-                                 text="Number of students must be greater than 0.")
+        update.message.reply_text("Number of students must be greater than 0.")
         return
 
     # Generate token
@@ -101,8 +102,7 @@ def start_session(update, context):
     # Return error message if a session is already running
     tutor_token = json.loads(redis_client.hget(TUTOR_MAP, username))
     if tutor_token['active']:
-        context.bot.send_message(chat_id=update.message.chat_id,
-                                 text="A session is already running. Please use /stop_session to stop it")
+        update.message.reply_text("A session is already running. Please use /stop_session to stop it")
         return
 
     # Delete previously existing token for tutor
@@ -122,10 +122,10 @@ def start_session(update, context):
     }
     redis_client.hset(TOKEN_MAP, token, json.dumps(token_data))
 
-    context.bot.send_message(chat_id=update.message.chat_id, text=f'You have successfully started a Reflection '
-                             f'Session. '
-                             f'Your token is {token}. Please write it on a '
-                             f'board to share it with students')
+    update.message.reply_text(f'You have successfully started a Reflection '
+                              f'Session. '
+                              f'Your token is {token}. Please write it on a '
+                              f'board to share it with students')
 
 
 def stop_session(update, context):
@@ -136,8 +136,7 @@ def stop_session(update, context):
 
     # Check whether username is for a valid tutor
     if not (redis_client.hexists(TUTOR_MAP, username)):
-        context.bot.send_message(chat_id=update.message.chat_id,
-                                 text="Sorry! You're not registered as a staff member and hence cannot use this command")
+        update.message.reply_text("Sorry! You're not registered as a staff member and hence cannot use this command")
         return
     
     # Get the existing token for tutor
@@ -145,15 +144,13 @@ def stop_session(update, context):
 
     # If no token exists means no attendance session exists
     if not tutor_token['active']:
-        context.bot.send_message(chat_id=update.message.chat_id,
-                                 text="You've not started a session yet. Please send /start_session to start a session")
+        update.message.reply_text("You've not started a session yet. Please send /start_session to start a session")
         return
     
     # Make token inactive for tutor
     tutor_token['active'] = False
     redis_client.hset(TUTOR_MAP, username, json.dumps(tutor_token))
-    context.bot.send_message(chat_id=update.message.chat_id,
-                             text="Your Reflection Session has successfully stopped. Thanks!")
+    update.message.reply_text("Your Reflection Session has successfully stopped. Thanks!")
 
     # Set token to inactive
     token = tutor_token['token']
@@ -176,9 +173,8 @@ def start(update, context):
     """
     Start function for the bot.
     """
-    context.bot.send_message(chat_id=update.message.chat_id,
-                             text="Welcome to CS1101S Cadet! This bot records your attendance for reflection sessions."
-                                  "Please send /setup <student number> to get started.")
+    update.message.reply_text("Welcome to CS1101S Cadet! This bot records your attendance for reflection sessions."
+                              "Please send /setup <student number> to get started.")
 
 
 def setup(update, context):
@@ -188,18 +184,18 @@ def setup(update, context):
     """
     # check if no args
     if len(context.args) == 0:
-        context.bot.send_message(chat_id=update.message.chat_id, text='Please enter your student number along with the '
-                                                                      'command. Eg if your student number is '
-                                                                      'A0123456X, enter /setup A0123456X')
+        update.message.reply_text('Please enter your student number along with the '
+                                  'command. Eg if your student number is '
+                                  'A0123456X, enter /setup A0123456X')
         return
     
     user_id = get_user_id(update)
 
     # check if already registered
     if redis_client.hexists(STUDENT_MAP, user_id):
-        context.bot.send_message(chat_id=update.message.chat_id, text="You're already signed up! Please wait for your"
-                                                                      " tutor to give you a token to mark "
-                                                                      "attendance")
+        update.message.reply_text("You're already signed up! Please wait for your"
+                                  " tutor to give you a token to mark "
+                                  "attendance")
         return
     
     # check if student can register for this module
@@ -214,13 +210,11 @@ def setup(update, context):
         }
         # store in redis client
         redis_client.hset(STUDENT_MAP, user_id, json.dumps(student_details))
-        context.bot.send_message(chat_id=update.message.chat_id, text="You're successfully registered! Please wait "
-                                                                      "for your tutor to give you an attendance token")
+        update.message.reply_text("You're successfully registered! Please wait "
+                                  "for your tutor to give you an attendance token")
     except gspread.exceptions.CellNotFound:
-        context.bot.send_message(chat_id=update.message.chat_id, text="Sorry! Your student number is not registered "
-                                                                      "for this module. Please contact a staff "
-                                                                      "member.")
-
+        update.message.reply_text("Sorry! Your student number is not registered "
+                                  "for this module. Please contact a staff member.")
 
 def attend(update, context):
     """
@@ -228,16 +222,16 @@ def attend(update, context):
     """
     # check if no args
     if len(context.args) == 0:
-        context.bot.send_message(chat_id=update.message.chat_id, text='Insufficient number of arguments. Please enter '
-                                                                      'the token along with the /attend command')
+        update.message.reply_text('Insufficient number of arguments. Please enter '
+                                  'the token along with the /attend command')
         return
     
     username = get_user_id(update)
 
     # check if registered or not
     if not redis_client.hexists(STUDENT_MAP, username):
-        context.bot.send_message(chat_id=update.message.chat_id, text="You've not registered yet. Please send /setup "
-                                                                      "<student Number> to register")
+        update.message.reply_text("You've not registered yet. Please send /setup "
+                                  "<student Number> to register")
         return
     
     # Get token
@@ -246,8 +240,7 @@ def attend(update, context):
     # Check if token is active
     token_status = json.loads(redis_client.hget(TOKEN_MAP, token))['active']
     if not redis_client.hexists(TOKEN_MAP, token) or not token_status:
-        context.bot.send_message(chat_id=update.message.chat_id,
-                                 text="Token doesn't exist or has expired. Please contact your tutor.")
+        update.message.reply_text("Token doesn't exist or has expired. Please contact your tutor.")
         return
 
     refresh_gsp()  # refresh api auth
@@ -260,26 +253,24 @@ def attend(update, context):
     # check if attendance already marked
     val = wks1.acell(f'{col_name_reflect}{row_name}').value
     if val == "TRUE":
-        context.bot.send_message(chat_id=update.message.chat_id,
-                                 text="Your attendance for this week has already been "
-                                 "marked. Thanks!")
+        update.message.reply_text("Your attendance for this week has already been "
+                                  "marked. Thanks!")
+        return
+    
+    # Check if token has maxed out its capacity
+    curr_capacity = json.loads(redis_client.hget(TOKEN_MAP, token))['capacity']
+    if curr_capacity == 0:
+        update.message.reply_text("Cannot take attendance. Your class is full. Please contact tutor as "
+                                  "someone may be trying to get undue points for attendance")
+        return
     else:
-        # Check if token has maxed out its capacity
-        curr_capacity = json.loads(redis_client.hget(TOKEN_MAP, token))['capacity']
-        if curr_capacity == 0:
-            context.bot.send_message(chat_id=update.message.chat_id,
-                                     text="Cannot take attendance. Your class is full. Please contact tutor as "
-                                     "someone may be trying to get undue points for attendance")
-            return
-        else:
-            # update attendance
-            wks1.update_acell(f'{col_name_reflect}{row_name}', 'TRUE')
-            context.bot.send_message(chat_id=update.message.chat_id, text="Your attendance for this week has been "
-                                     "successfully marked. Thanks!")
-            token_map = json.loads(redis_client.hget(TOKEN_MAP, token))
-            token_map['capacity'] -= 1
-            redis_client.hset(TOKEN_MAP, token, json.dumps(token_map))  # reduce capacity
-            return
+        # update attendance
+        wks1.update_acell(f'{col_name_reflect}{row_name}', 'TRUE')
+        update.message.reply_text("Your attendance for this week has been successfully marked. Thanks!")
+        token_map = json.loads(redis_client.hget(TOKEN_MAP, token))
+        token_map['capacity'] -= 1
+        redis_client.hset(TOKEN_MAP, token, json.dumps(token_map))  # reduce capacity
+        return
 
 
 def refresh_gsp():
@@ -296,25 +287,24 @@ def help_func(update, context):
     """
     Function to generate help text.
     """
-    context.bot.send_message(chat_id=update.message.chat_id,
-                             text="Here are the available functions in the bot:\n"
-                                  "For students: \n"
-                                  "/setup <student number>: to register yourself.\n"
-                                  "/attend <token> to mark your attendance. Token will be provided by cluster leader.\n"
-                                  "/attendance_reflection to check your attendance for reflection sessions\n"
-                                  "For avengers/tutors: \n"
-                                  "/start_session <number of students> to mark the attendance for your group of "
-                                  "students.\n"
-                                  "/stop_session to stop your current running session.\n")
+    update.message.reply_text("Here are the available functions in the bot:\n"
+                              "For students: \n"
+                              "/setup <student number>: to register yourself.\n"
+                              "/attend <token> to mark your attendance. Token will be provided by cluster leader.\n"
+                              "/attendance_reflection to check your attendance for reflection sessions\n"
+                              "For avengers/tutors: \n"
+                              "/start_session <number of students> to mark the attendance for your group of "
+                              "students.\n"
+                              "/stop_session to stop your current running session.\n")
 
 def change_username(update, context):
     """
     Function to change the username of bot user.
     """
     if len(context.args) == 0:
-        context.bot.send_message(chat_id=update.message.chat_id, text='Please enter your student number along with the '
-                                                                      'command. Eg if your student number is '
-                                                                      '123456789, enter /change_username 123456789')
+        update.message.reply_text('Please enter your student number along with the '
+                                  'command. Eg if your student number is '
+                                  '123456789, enter /change_username 123456789')
         return
 
     user_id = get_user_id(update)
@@ -331,13 +321,11 @@ def change_username(update, context):
         # Map new user ID to row number
         redis_client.hset(STUDENT_MAP, user_id,
                             json.dumps(student_details))
-        context.bot.send_message(
-            chat_id=update.message.chat_id, text="You've successfully changed your username.")
+        update.message.reply_text("You've successfully changed your username.")
     except gspread.exceptions.CellNotFound:
-        context.bot.send_message(chat_id=update.message.chat_id,
-                                    text="Sorry! Your student number is not registered "
-                                        "for this module. Please contact a staff "
-                                        "member.")
+        update.message.reply_text("Sorry! Your student number is not registered "
+                                  "for this module. Please contact a staff "
+                                  "member.")
 
 
 def attendance_reflection(update, context):
@@ -349,8 +337,7 @@ def attendance_reflection(update, context):
 
     # Check if student is registered
     if not redis_client.hexists(STUDENT_MAP, username):
-        context.bot.send_message(chat_id=update.message.chat_id, text="You've not registered yet. Please send /setup "
-                                                                      "<Student Number> to register")
+        update.message.reply_text("You've not registered yet. Please send /setup <Student Number> to register")
         return
 
     refresh_gsp()  # refresh api auth
@@ -364,16 +351,8 @@ def attendance_reflection(update, context):
         if wks1.acell(f'{col}{row_num}').value == 'TRUE':
             weeks.append("Week " + str(week_counter))
         week_counter += 1
-    context.bot.send_message(chat_id=update.message.chat_id,
-                                text="Our records indicate that you've so far attended reflection sessions for: "
-                                    + print_arr(weeks) + ". Please contact a staff member if there is a discrepancy")
-
-
-def cancel(update, context):
-    context.bot.send_message(chat_id=update.message.chat_id,
-                             text="Okay! Commenting canceled.")
-    return ConversationHandler.END
-
+    update.message.reply_text(f"Our records indicate that you've so far attended reflection sessions for: {print_arr(weeks)}." 
+                              "Please contact a staff member if there is a discrepancy")
 
 def print_arr(arr):
     """
