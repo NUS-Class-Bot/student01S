@@ -212,11 +212,6 @@ def setup(update, context):
         update.message.reply_text("Sorry! Your student number is not registered "
                                   "for this module. Please contact a staff member.")
 
-# Helper function to update the attendance in the sheet
-def update_sheet_attendance(worksheet, col_name, row_name, update):
-    worksheet.update_acell(f'{col_name}{row_name}', 'TRUE')
-    update.message.reply_text("Your attendance for this week has been successfully marked. Thanks!")
-
 def attend(update, context):
     """
     Function to mark attendance of bot user.
@@ -266,8 +261,8 @@ def attend(update, context):
         return
     else:
         # update attendance
-        # We use context.dispatcher.run_async() here because the sheet update can be done asynchronously
-        context.dispatcher.run_async(update_sheet_attendance, wks1, col_name_reflect, row_name, update, update=update)
+        wks1.update_acell(f'{col_name_reflect}{row_name}', 'TRUE')
+        update.message.reply_text("Your attendance for this week has been successfully marked. Thanks!")
 
         # decrease token capacity        
         token_map = json.loads(redis_client.hget(TOKEN_MAP, token))
