@@ -219,15 +219,29 @@ def setup(update, context):
     except:
         update.message.reply_text("There was some issue in registration, please try again.")
 
-def attend(update, context):
+def decrease_token_capacity(token_data_and_token):
     """
-    Function to mark attendance of bot user.
+    Helper function to decrease token capacity if value is returned.
+    """
+    # No result was returned
+    if not token_data_and_token:
+        return
+    
+    # Update token capacity
+    token_data = token_data_and_token[0]
+    token = token_data_and_token[1]
+    token_data['capacity'] -= 1
+    redis_client.hset(TOKEN_MAP, token, json.dumps(token_data))  # reduce capacity
+
+def attend_async(update, context):
+    """
+    Helper function to run part of the `attend` function asynchronously.
     """
     # check if no args
     if len(context.args) == 0:
         update.message.reply_text('Insufficient number of arguments. Please enter '
                                   'the token along with the /attend command')
-        return
+        return None
     
     username = get_user_id(update)
 
@@ -235,7 +249,7 @@ def attend(update, context):
     if not redis_client.hexists(STUDENT_MAP, username):
         update.message.reply_text("You've not registered yet. Please send /setup "
                                   "<student Number> to register")
-        return
+        return None
     
     # Get token
     token = context.args[0]
@@ -243,11 +257,12 @@ def attend(update, context):
     # Check if token is active
     if not redis_client.hexists(TOKEN_MAP, token):
         update.message.reply_text("Token doesn't exist or has expired. Please contact your tutor.")
-        return
+        return None 
+    
     token_data = json.loads(redis_client.hget(TOKEN_MAP, token))
     if not token_data['active']:
         update.message.reply_text("Token doesn't exist or has expired. Please contact your tutor.")
-        return
+        return None
 
     refresh_gsp()  # refresh api auth
 
@@ -265,27 +280,35 @@ def attend(update, context):
     if val == "TRUE":
         update.message.reply_text("Your attendance for this week has already been "
                                   "marked. Thanks!")
-        return
+        return None
     
     # Check if token has maxed out its capacity
     curr_capacity = token_data['capacity']
     if curr_capacity == 0:
         update.message.reply_text("Cannot take attendance. Your class is full. Please contact tutor as "
                                   "someone may be trying to get undue points for attendance")
+        return None
+    
+    # update attendance
+    try:
+        wks1.update_acell(f'{col_name_reflect}{row_name}', 'TRUE')
+    except:
+        update.message.reply_text("There was some issue in marking attendance, please try again.")
         return
-    else:
-        # update attendance
-        try:
-            wks1.update_acell(f'{col_name_reflect}{row_name}', 'TRUE')
-        except:
-            update.message.reply_text("There was some issue in marking attendance, please try again.")
-            return
-        update.message.reply_text("Your attendance for this week has been successfully marked. Thanks!")
 
-        # decrease token capacity        
-        token_data['capacity'] -= 1
-        redis_client.hset(TOKEN_MAP, token, json.dumps(token_data))  # reduce capacity
-        return
+    update.message.reply_text("Your attendance for this week has been successfully marked. Thanks!")
+    return (token_data, token)
+
+def attend(update, context):
+    """
+    Function to mark attendance of bot user.
+    """
+    context.dispatcher.run_async(
+        attend_async,
+        update,
+        context,
+        update=update
+    ).add_done_callback(decrease_token_capacity)
 
 
 def refresh_gsp():
