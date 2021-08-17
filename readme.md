@@ -30,14 +30,11 @@ Here's a comprehensive summary of all the command supported by the bot and their
 
 | Command                        | For user           | Function |
 | -------------                  |-------------| -----|
-| `/setup <student number>`      | `Student`          |  To setup with the bot's database (onetime process)  |
-| `/attend <token>`               |   `Student`        |  To mark attendance  |
+| `/setup <student number>`      | `Student`          |  To register student's username with the bot's database (onetime process) through matric number  |
+| `/attend <token>`               |   `Student`        |  To mark attendance, supplying the attendance token  |
 | `/attendance_reflection`        | `Student`           | To check attendance data for reflection sessions till date.  |
-| `/attendance_studio`        | `Student`           | To check attendance data for studio sessions (tutorials) till date.  |
-| `/start_session <num students>`        | `Tutor`           | To mark the attendance for `num students` for 1 class  |
+| `/start_session <num students>`        | `Tutor`           | To mark the attendance for `num students` for 1 class, generates the attendance token  |
 | `/stop_session`        | `Tutor`           | To stop taking attendance for current session.  |
-| `/comment`        | `Tutor`           | To trigger a set of commands to give feedback on a student's performance in a particular session.  |
-| `/comment`        | `Tutor`           | To trigger a set of commands to give feedback on a student's performance in a particular session.  |
 
 The bot is currently used by the staff of CS1101S for tutorials, reflection sessions and staff meetings. Thus, the bot currently has approximately 600+ active users. 
 
