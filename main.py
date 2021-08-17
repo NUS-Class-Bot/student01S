@@ -363,24 +363,23 @@ def attendance_reflection(update, context):
 
     # iterate through columns of the row, checking for instances where the attendance is marked.
     row_num = json.loads(redis_client.hget(STUDENT_MAP, username))['row']
-    weeks = []
-    week_counter = 2
-    for i in range(66, 78):
-        col = chr(i)
-        try:
-            if wks1.acell(f'{col}{row_num}').value == 'TRUE':
-                weeks.append("Week " + str(week_counter))
-        except:
-            update.message.reply_text("There was some issue in checking attendance, please try again.")
-        week_counter += 1
-    update.message.reply_text(f"Our records indicate that you've so far attended reflection sessions for: {print_arr(weeks)}." 
-                              "Please contact a staff member if there is a discrepancy")
+    try:
+        cells = wks1.range(f'B{row_num}:M{row_num}')
+    except gspread.exceptions.GSpreadException:
+        update.message.reply_text("There was some issue in checking attendance, please try again.")
+        return
+    # filter the 'FALSE' values out
+    cells = map(lambda index_cell: f'Week {index_cell[0] + 2}' if index_cell[1].value == 'TRUE' else 'FALSE', enumerate(cells))
+    cells = list(filter(lambda x : x != 'FALSE', cells))
+
+    update.message.reply_text(f"Our records indicate that you've so far attended reflection sessions for:\n\n{print_arr(cells)}\n\n" 
+                              "Please contact a staff member if there is a discrepancy.")
 
 def print_arr(arr):
     """
     Function to get the string version of an array in one line.
     """
-    return " ".join(arr)
+    return "\n".join(arr)
 
 
 def init_data():
