@@ -198,7 +198,7 @@ def setup(update, context):
         return
     
     # check if student can register for this module
-    student_no = context.args[0]
+    student_no = context.args[0].upper()
     try:
         refresh_gsp()  # refresh api auth
         cell = wks1.find(student_no)  # Look in reflection sessions
@@ -323,7 +323,7 @@ def change_username(update, context):
         return
 
     user_id = get_user_id(update)
-    student_no = context.args[0]
+    student_no = context.args[0].upper()
     try:
         refresh_gsp()  # refresh api auth
         # Find row number in reflection session sheet
