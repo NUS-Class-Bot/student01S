@@ -12,7 +12,7 @@ Currently, the attendance taking process in NUS is the same old concept from the
 
 NUS Class Bot is a [Telegram](https://telegram.org/) Bot to solve the above mentioned problem. The bot stores the attendance data collected in real-time on a Google Spreadsheet, which is setup during deployment and shared with module staff. The solution connects three different services: Telegram, Python and Google Spreadsheets to collect the attendance data. The solution uses redis to stores multiple mappings to match a Telegram user with a row on Google Spreadsheets. The solution is currently deployed Amazon Web Services (AWS). The connection is illustrated in the following diagram:
 
-![diagram](diagram.png)
+![diagram](images/diagram.png)
 
 
 The bot on this repository has been specifically designed for use with [CS1101S](https://comp.nus.edu.sg/~cs1101s/), an expertial introductory programming module for CS Freshman at NUS-SoC. Here's a basic work-flow:

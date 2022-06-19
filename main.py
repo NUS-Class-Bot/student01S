@@ -5,12 +5,20 @@ This version is specifically trimmed-down for AY 2020/21 Sem 1. For the complete
 import os
 import json
 import logging
-from telegram import ReplyKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, ConversationHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import redis
 import time
+
+#######################################
+############ FILE LINKS ###############
+#######################################
+
+ACAD_CALENDAR = 'records/acad_calendar.json'
+PEOPLE = 'records/people.json'
+SHEET = 'CS1101S Reflection Attendance AY 21/22 Sem 1'
+CREDENTIALS = 'attend.json'
 
 #######################################
 ### SETUP REQUIRED GLOBAL VARIABLES ###
@@ -22,7 +30,7 @@ def get_week_ref():
     li = cur_time.split()
     month = li[1]
     date = int(li[2])  # convert to integer for comparison later
-    with open('acad_calendar.json') as acad_calendar:
+    with open(ACAD_CALENDAR) as acad_calendar:
         data = json.load(acad_calendar)
         for date_range in data[month].keys():
             start = int(date_range.split('-')[0])
@@ -52,10 +60,10 @@ TOKEN_MAP = "TOKEN_MAP"
 scope = ['https://spreadsheets.google.com/feeds',
          'https://www.googleapis.com/auth/drive']
 credentials = ServiceAccountCredentials.from_json_keyfile_name(
-    'attend.json', scope)
+    CREDENTIALS, scope)
 gc = gspread.authorize(credentials)
 try:
-    wks1 = gc.open("CS1101S Reflection Attendance AY 21/22 Sem 1").sheet1  # For Reflection
+    wks1 = gc.open(SHEET).sheet1  # For Reflection
 except gspread.exceptions.GSpreadException:
     print('Error in opening the sheet!')
 
@@ -393,7 +401,7 @@ def init_data():
     })
 
     # Setup module/admin staff in Redis database
-    with open('people.json') as people_json:
+    with open(PEOPLE) as people_json:
         data = json.load(people_json)
         for staff_member in data['staff']:
             if not redis_client.hexists(TUTOR_MAP, staff_member):
