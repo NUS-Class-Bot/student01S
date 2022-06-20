@@ -25,7 +25,7 @@ Once the above is done, we need to give the bot access to this spreadsheet.
 
 * You will be redirected to the API library. Enable both the **Google Drive API** and the **Google Sheets API**.
 * Go to the credentials page from the left sidebar menu and click on "create credentials" -> "service account" 
-* Fill out the form, as shown here and copy the email address: 
+* Fill out the form, as shown here: 
 
 <img width="583" alt="Screenshot 2022-06-20 at 3 16 21 PM" src="https://user-images.githubusercontent.com/29497717/174574935-6b442a30-74f0-4e42-b6c0-90dd1296dde6.png">
 
@@ -35,7 +35,7 @@ Once the above is done, we need to give the bot access to this spreadsheet.
 
 * Click on "add key" -> "create new key" -> "json" 
 * A new JSON file will be downloaded on your computer. Rename it to `attend.json` and copy it to the `records/` directory. 
-* Share the google spreadsheet with the bot's email address copied earlier (available as "client email address" in the `attend.json` file).
+* Share the google spreadsheet with the bot's email address (available as "client email address" in the `attend.json` file).
 
 ## Updating the Academic Calendar
 
