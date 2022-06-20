@@ -8,8 +8,26 @@ This guide is for bot administrators to setup and deploy the bot from scratch, s
 
 ## Setting up a Google Sheet for Attendance
 
-1. Mention template.
-2. Mention how to create Sheet.
+A Google Sheet serves as persistent storage for attendance data and is in the format of a table. Each student is an entry in the table and is uniquely identified by their matriculation numbers. There are exactly 13 columns, one for the student number and 12 for indicating the attendance in weeks 2 to 13, inclusive. A sample is shown in the following image: 
+
+<img width="1369" alt="Sample Attendance Sheet" src="https://user-images.githubusercontent.com/29497717/174571887-10da7e42-97d1-4303-9ed7-bea6a8917c89.png">
+
+Before the start of the semester, make sure you add all the matriculation numbers to the Student Numbers column. This is to whitelist access to the bot so that no one can arbitrarily sign up to use the bot. 
+
+Once the above is done, we need to give the bot access to this spreadsheet.
+
+### Setting up Google Sheet credentials for the bot
+
+* Go to [https://console.developers.google.com][Google Developers Console] and setup a new project 
+* Click on the "Enable APIs and Services Button" (highlighted in the following image)
+<img width="890" alt="Screenshot 2022-06-20 at 3 11 42 PM" src="https://user-images.githubusercontent.com/29497717/174574095-a581660b-343e-4d0f-a93a-710b087ef6b1.png">
+* You will be redirected to the API library. Enable both the **Google Drive API** and the **Google Sheets API**
+* Go to the credentials page from the left sidebar menu and click on "create credentials" -> "service account" 
+* Fill out the form, as shown here and copy the email address: <img width="583" alt="Screenshot 2022-06-20 at 3 16 21 PM" src="https://user-images.githubusercontent.com/29497717/174574935-6b442a30-74f0-4e42-b6c0-90dd1296dde6.png">
+* Once the service account is created, click on it and go to the keys tab: <img width="575" alt="Screenshot 2022-06-20 at 3 18 38 PM" src="https://user-images.githubusercontent.com/29497717/174575381-b2609a92-1502-4ad3-a84b-e3b4ae0e0b03.png">
+* Click on "add key" -> "create new key" -> "json" 
+* A new JSON file will be downloaded on your computer. Rename it to `attend.json` and copy it to the root directory. 
+* Share the google spreadsheet with the bot's email address copied earlier
 
 ## Updating the Academic Calendar
 
