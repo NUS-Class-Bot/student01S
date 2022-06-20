@@ -40,10 +40,31 @@ When taking attendance from students, the bot automatically maps the day to the 
 
 ## Updating the Telegram access roles
 
-Currently the Telegram usernames which are assigned as reflection tutors and bot administrators are hardcoded in the `records/people.json` file. Only usernames mentioned in this file can access the tutor functions of the but (such as starting and stopping attendance sessions). **It is for this reason that tutors should not change their Telegram usernames throughout the sem, or let the bot administrator know if they do so.**
+Currently the Telegram usernames which are assigned as reflection tutors and bot administrators are hardcoded in a `records/people.json` file. Only usernames mentioned in this file can access the tutor functions of the but (such as starting and stopping attendance sessions). **It is for this reason that tutors should not change their Telegram usernames throughout the sem, or let the bot administrator know if they do so.** The format of the file is as follows:
 
-## Update sheet name and credentials file
+```
+{
+    "staff": [  # Telegram usernames of reflection tutors
+        "john",
+        "doe",
+        ...
+    ],
+    "admin": [  # Telegram usernames of module/bot administrators
+        "jane",
+        "doe",
+        ...
+    ]
+}
+```
+
+## Update sheet and credentials file string in `main.py`
+
+Once the credentials have been downloaded from Google and the Google Sheets file is set up, you can change the `SHEET` and `CREDENTIALS` variable in `main.py` so the bot knows which access credentials to use and which attendance sheet to work with.
 
 ## Deploy the bot
+
+You can deploy the Telegram bot if you have access to a Linux server. Just clone the repository, [setup a Python virtual environment inside the repository folder](https://docs.python.org/3/library/venv.html), and activate the virtual environment. After that, you can run the command `pip install -r requirements.txt` to install the relevant Python libraries.
+
+Once the bot libraries are installed, [you can run the bot script as a Linux service](https://medium.com/codex/setup-a-python-script-as-a-service-through-systemctl-systemd-f0cc55a42267). This ensures that exiting the server does not stop the Telegram bot, which is essentially a continuously running Python script.
 
 ## Run tests
