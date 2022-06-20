@@ -19,15 +19,23 @@ Once the above is done, we need to give the bot access to this spreadsheet.
 ### Setting up Google Sheet credentials for the bot
 
 * Go to [https://console.developers.google.com][Google Developers Console] and setup a new project 
-* Click on the "Enable APIs and Services Button" (highlighted in the following image)
+* Click on the "Enable APIs and Services Button":
+
 <img width="890" alt="Screenshot 2022-06-20 at 3 11 42 PM" src="https://user-images.githubusercontent.com/29497717/174574095-a581660b-343e-4d0f-a93a-710b087ef6b1.png">
-* You will be redirected to the API library. Enable both the **Google Drive API** and the **Google Sheets API**
+
+* You will be redirected to the API library. Enable both the **Google Drive API** and the **Google Sheets API**.
 * Go to the credentials page from the left sidebar menu and click on "create credentials" -> "service account" 
-* Fill out the form, as shown here and copy the email address: <img width="583" alt="Screenshot 2022-06-20 at 3 16 21 PM" src="https://user-images.githubusercontent.com/29497717/174574935-6b442a30-74f0-4e42-b6c0-90dd1296dde6.png">
-* Once the service account is created, click on it and go to the keys tab: <img width="575" alt="Screenshot 2022-06-20 at 3 18 38 PM" src="https://user-images.githubusercontent.com/29497717/174575381-b2609a92-1502-4ad3-a84b-e3b4ae0e0b03.png">
+* Fill out the form, as shown here and copy the email address: 
+
+<img width="583" alt="Screenshot 2022-06-20 at 3 16 21 PM" src="https://user-images.githubusercontent.com/29497717/174574935-6b442a30-74f0-4e42-b6c0-90dd1296dde6.png">
+
+* Once the service account is created, click on it and go to the keys tab:
+
+<img width="575" alt="Screenshot 2022-06-20 at 3 18 38 PM" src="https://user-images.githubusercontent.com/29497717/174575381-b2609a92-1502-4ad3-a84b-e3b4ae0e0b03.png">
+
 * Click on "add key" -> "create new key" -> "json" 
-* A new JSON file will be downloaded on your computer. Rename it to `attend.json` and copy it to the root directory. 
-* Share the google spreadsheet with the bot's email address copied earlier
+* A new JSON file will be downloaded on your computer. Rename it to `attend.json` and copy it to the `records/` directory. 
+* Share the google spreadsheet with the bot's email address copied earlier (available as "client email address" in the `attend.json` file).
 
 ## Updating the Academic Calendar
 
@@ -81,8 +89,22 @@ Once the credentials have been downloaded from Google and the Google Sheets file
 
 ## Deploy the bot
 
+### Setup directory and Python libraries in a Linux server
+
 You can deploy the Telegram bot if you have access to a Linux server. Just clone the repository, [setup a Python virtual environment inside the repository folder](https://docs.python.org/3/library/venv.html), and activate the virtual environment. After that, you can run the command `pip install -r requirements.txt` to install the relevant Python libraries.
+
+### Install Redis
+
+We use Redis for storing our persistent data, such as mappings between Telegram user ID and relevant sheet row for the student. **It is for this reason that the sheet rows should not be messed up. If you want to add new student IDs once other students have started registering themselves on the bot, please add it at the end of the sheet.** Ensure that [Redis is installed](https://redis.io/docs/getting-started/installation/install-redis-on-linux/) in the server.
+
+### Update the bot key inside `main.py`
+
+The attendance bot is identified using a unique key on Telegram. In the `main()` function, `os.environ.get('TELEKEY')` gets this unique key. Set the environment variable for `TELEKEY` to finish deployment.
+
+### Run the bot as a Linux service
 
 Once the bot libraries are installed, [you can run the bot script as a Linux service](https://medium.com/codex/setup-a-python-script-as-a-service-through-systemctl-systemd-f0cc55a42267). This ensures that exiting the server does not stop the Telegram bot, which is essentially a continuously running Python script.
 
 ## Run tests
+
+We do not have any unit tests setup for the bot yet. However, to test, you can add sample student IDs in the attendance sheet. Bot admins can register using that sample student ID, create an attendance session and also mark their own attendance to check if everything works correctly.

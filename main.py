@@ -17,8 +17,10 @@ import time
 
 ACAD_CALENDAR = 'records/acad_calendar.json'            # JSON file for academic calendar of the semester
 PEOPLE = 'records/people.json'                          # JSON file of reflection tutors and module/bot admin
-SHEET = 'CS1101S Reflection Attendance AY 21/22 Sem 1'  # Name of the attendance Google Sheet
-CREDENTIALS = 'attend.json'                             # Name of the Google Sheet credentials file
+CREDENTIALS = 'records/attend.json'                     # Name of the Google Sheet credentials file
+
+# Name of the attendance Google Sheet, PLEASE CHANGE IT ACCORDINGLY
+SHEET = 'CS1101S Reflection Attendance AY 21/22 Sem 1'
 
 #######################################
 ### SETUP REQUIRED GLOBAL VARIABLES ###
