@@ -1,6 +1,6 @@
 APScheduler==3.6.3
 cachetools==4.2.2
-certifi==2021.5.30
+certifi==2022.12.7
 charset-normalizer==2.0.4
 google-api-core==1.31.1
 google-api-python-client==2.15.0
